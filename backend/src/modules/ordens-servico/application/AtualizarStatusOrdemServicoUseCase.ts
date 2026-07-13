@@ -1,0 +1,95 @@
+import type { EventBus } from '../../../shared/domain/EventBus';
+import { OS_STATUS_ALTERADO_EVENT, type OSStatusAlterado } from '../../../shared/domain/events/OSStatusAlterado';
+import { ValidarChecklistCompletoUseCase } from '../../checklist/application/ValidarChecklistCompletoUseCase';
+import type { ChecklistRepository } from '../../checklist/domain/ChecklistRepository';
+import { OrdemServicoNaoEncontradaError } from '../domain/errors/OrdemServicoNaoEncontradaError';
+import { TransicaoInvalidaError } from '../domain/errors/TransicaoInvalidaError';
+import type { HistoricoStatusOSRepository } from '../domain/HistoricoStatusOSRepository';
+import { podeTransicionar, type PapelUsuarioOS } from '../domain/MaquinaEstadosOS';
+import type { OrdemServico, StatusOS } from '../domain/OrdemServico';
+import type { OrdemServicoRepository } from '../domain/OrdemServicoRepository';
+
+export interface AtualizarStatusOrdemServicoInput {
+  ordemServicoId: string;
+  statusNovo: StatusOS;
+  papelUsuario: PapelUsuarioOS;
+  usuarioId?: string;
+  observacao?: string;
+}
+
+export interface AtualizarStatusOrdemServicoDeps {
+  ordemServicoRepository: OrdemServicoRepository;
+  historicoStatusOSRepository: HistoricoStatusOSRepository;
+  eventBus: EventBus;
+  checklistRepository?: ChecklistRepository;
+}
+
+const STATUS_QUE_FECHAM_OS: readonly StatusOS[] = ['concluida', 'cancelada'];
+
+/**
+ * Transiciona o status de uma Ordem de Servico, validando a transicao via
+ * `podeTransicionar` (MaquinaEstadosOS). Grava o historico, fecha a OS
+ * (fechadoEm) quando o novo status for `concluida`/`cancelada` e publica o
+ * evento `OSStatusAlterado` apos persistir.
+ *
+ * Lanca OrdemServicoNaoEncontradaError se a OS nao existir, e
+ * TransicaoInvalidaError se a transicao nao for permitida (nesse caso nada
+ * e persistido e nenhum evento e publicado).
+ */
+export class AtualizarStatusOrdemServicoUseCase {
+  constructor(private readonly deps: AtualizarStatusOrdemServicoDeps) {}
+
+  async execute(input: AtualizarStatusOrdemServicoInput): Promise<OrdemServico> {
+    const { ordemServicoRepository, historicoStatusOSRepository, eventBus } = this.deps;
+
+    const ordemServico = await ordemServicoRepository.findById(input.ordemServicoId);
+    if (!ordemServico) {
+      throw new OrdemServicoNaoEncontradaError(input.ordemServicoId);
+    }
+
+    const statusAnterior = ordemServico.status;
+
+    if (!podeTransicionar(statusAnterior, input.statusNovo, input.papelUsuario)) {
+      throw new TransicaoInvalidaError(statusAnterior, input.statusNovo, input.papelUsuario);
+    }
+
+    if (input.statusNovo === 'concluida' && this.deps.checklistRepository) {
+      const validarChecklist = new ValidarChecklistCompletoUseCase({
+        checklistRepository: this.deps.checklistRepository,
+      });
+      await validarChecklist.execute({
+        ordemServicoId: input.ordemServicoId,
+        categoriaServicoId: ordemServico.categoriaServicoId,
+      });
+    }
+
+    const fechaOS = STATUS_QUE_FECHAM_OS.includes(input.statusNovo);
+
+    const ordemAtualizada = await ordemServicoRepository.update(input.ordemServicoId, {
+      status: input.statusNovo,
+      fechadoEm: fechaOS ? new Date() : undefined,
+    });
+
+    await historicoStatusOSRepository.create({
+      ordemServicoId: input.ordemServicoId,
+      statusAnterior,
+      statusNovo: input.statusNovo,
+      alteradoPorUsuarioId: input.usuarioId,
+      alteradoPorBot: input.papelUsuario === 'bot',
+      observacao: input.observacao,
+    });
+
+    const evento: OSStatusAlterado = {
+      ordemServicoId: ordemAtualizada.id,
+      statusAnterior,
+      statusNovo: input.statusNovo,
+      clienteId: ordemAtualizada.clienteId,
+      alteradoPor: input.usuarioId ?? 'bot',
+      alteradoPorBot: input.papelUsuario === 'bot',
+      timestamp: new Date(),
+    };
+    eventBus.publish<OSStatusAlterado>(OS_STATUS_ALTERADO_EVENT, evento);
+
+    return ordemAtualizada;
+  }
+}

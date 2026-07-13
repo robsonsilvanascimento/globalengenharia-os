@@ -1,0 +1,118 @@
+name: Deploy Producao
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+jobs:
+  test-backend:
+    name: Testes Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: backend
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: backend
+        run: npm run lint --if-present
+
+      - name: Testes unitarios
+        working-directory: backend
+        run: npm test
+
+  test-frontend:
+    name: Testes Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias frontend
+        working-directory: frontend
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint --if-present
+
+      - name: Testes unitarios
+        working-directory: frontend
+        run: npm test
+
+  deploy:
+    name: Deploy VPS Hostinger
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: producao
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          timeout: 300s
+          command_timeout: 20m
+          script: |
+            set -euo pipefail
+
+            echo "==> [1/6] Atualizando codigo..."
+            cd /opt/globalengenharia
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> [2/6] Build das imagens (backend e frontend)..."
+            docker compose -f docker-compose.prod.yml build --no-cache backend frontend
+
+            echo "==> [3/6] Subindo servicos atualizados..."
+            docker compose -f docker-compose.prod.yml up -d --no-deps --remove-orphans backend frontend
+
+            echo "==> [4/6] Aguardando backend ficar saudavel..."
+            timeout 60 bash -c '
+              until docker compose -f docker-compose.prod.yml exec -T backend \
+                wget -qO- http://localhost:3333/health > /dev/null 2>&1; do
+                echo "  aguardando backend..."
+                sleep 3
+              done
+            ' || { echo "ERRO: backend nao respondeu em 60s"; exit 1; }
+
+            echo "==> [5/6] Executando migrations Prisma..."
+            docker compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy
+
+            echo "==> [6/6] Limpeza de imagens orfas..."
+            docker system prune -f --volumes=false
+
+            echo ""
+            echo "Deploy concluido em $(date '+%Y-%m-%d %H:%M:%S %Z')"
+            echo "Versao: $(git rev-parse --short HEAD)"

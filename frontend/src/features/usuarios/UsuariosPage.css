@@ -1,0 +1,39 @@
+.usuarios-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.usuarios-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.usuarios-page-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.usuarios-page-new-button {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.usuarios-page-status-ativo {
+  font-weight: 600;
+  color: #15803d;
+}
+
+.usuarios-page-status-inativo {
+  font-weight: 600;
+  color: #b91c1c;
+}

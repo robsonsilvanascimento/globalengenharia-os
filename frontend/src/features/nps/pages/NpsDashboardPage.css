@@ -1,0 +1,158 @@
+.nps-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nps-page h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+}
+
+.nps-filtro {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.nps-filtro label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.nps-filtro input[type="date"] {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.nps-filtro button {
+  padding: 8px 20px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nps-filtro button:hover {
+  background: #1d4ed8;
+}
+
+.nps-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.nps-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.nps-card-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.nps-card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.nps-card-value.score-positivo {
+  color: #16a34a;
+}
+
+.nps-card-value.score-neutro {
+  color: #d97706;
+}
+
+.nps-card-value.score-negativo {
+  color: #dc2626;
+}
+
+.nps-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.nps-chart-box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.nps-chart-box h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 16px;
+}
+
+.nps-table-box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 32px;
+}
+
+.nps-table-box h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+}
+
+.nps-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.nps-table th {
+  text-align: left;
+  padding: 8px 10px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.nps-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.nps-table tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 768px) {
+  .nps-charts {
+    grid-template-columns: 1fr;
+  }
+}

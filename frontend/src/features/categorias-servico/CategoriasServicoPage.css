@@ -1,0 +1,83 @@
+.categorias-servico-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.categorias-servico-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.categorias-servico-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.categorias-servico-new-button {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.categorias-servico-filters {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.categorias-servico-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+
+.categorias-servico-filter-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.categorias-servico-filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #334155;
+  cursor: pointer;
+}
+
+.categorias-servico-toggle {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.categorias-servico-toggle.is-active {
+  color: #15803d;
+  background-color: #dcfce7;
+  border-color: #86efac;
+}
+
+.categorias-servico-toggle.is-inactive {
+  color: #64748b;
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.categorias-servico-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

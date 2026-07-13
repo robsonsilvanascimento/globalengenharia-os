@@ -1,0 +1,27 @@
+.ui-select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background-color: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  appearance: auto;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ui-select:hover {
+  border-color: #cbd5e1;
+}
+
+.ui-select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.ui-select:disabled {
+  background-color: #f1f5f9;
+  cursor: not-allowed;
+}

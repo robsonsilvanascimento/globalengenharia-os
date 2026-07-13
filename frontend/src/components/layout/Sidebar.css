@@ -1,0 +1,43 @@
+.app-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background-color: #0f172a;
+  padding: 16px 12px;
+}
+
+.app-sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-sidebar-link {
+  display: block;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.15s ease, padding-left 0.18s ease;
+}
+
+.app-sidebar-link:hover {
+  background-color: #1e293b;
+  color: #ffffff;
+  padding-left: 20px;
+}
+
+.app-sidebar-link-active {
+  background-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+}
+
+.app-sidebar-link-active:hover {
+  background-color: #2563eb;
+  padding-left: 16px;
+}

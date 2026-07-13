@@ -1,0 +1,18 @@
+.clientes-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.clientes-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.clientes-page-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}

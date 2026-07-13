@@ -1,0 +1,70 @@
+@keyframes ordens-servico-list-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ordens-servico-list-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: ordens-servico-list-fade-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ordens-servico-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ordens-servico-list-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.ordens-servico-list-new-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.3rem;
+  border-radius: 999px;
+  background-color: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.ordens-servico-list-new-button:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.38);
+}
+
+.ordens-servico-list-new-button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.ordens-servico-list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background-color: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.ordens-servico-list-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 180px;
+  font-size: 0.875rem;
+  color: #374151;
+}

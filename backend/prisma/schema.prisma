@@ -1,0 +1,764 @@
+// Prisma schema - Sistema de Ordens de Servico com chatbot WhatsApp
+// Dominio: Eletrica, Automacao e Energia Solar
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum PapelUsuario {
+  atendente
+  tecnico
+  admin
+  ajudante
+}
+
+enum AreaServico {
+  eletrica
+  automacao
+  energia_solar
+  outro
+}
+
+enum PrioridadeOS {
+  baixa
+  normal
+  alta
+  urgente
+}
+
+enum StatusOS {
+  aberta
+  triagem
+  atribuida
+  em_andamento
+  aguardando_peca
+  concluida
+  cancelada
+}
+
+enum CriadoVia {
+  whatsapp
+  painel
+}
+
+enum DirecaoMensagem {
+  entrada
+  saida
+}
+
+enum StatusEnvioNotificacao {
+  pendente
+  enviada
+  falhou
+}
+
+enum StatusSolicitacaoAtendimento {
+  pendente
+  respondida
+}
+
+enum TipoMidiaOS {
+  video
+}
+
+enum TipoDocumentoOS {
+  certificado_garantia
+  manual
+  laudo_tecnico
+  nota_fiscal
+  foto
+  outro
+}
+
+enum TurnoAtendimento {
+  diurno
+  noturno
+}
+
+enum StatusPagamento {
+  pendente
+  pago
+  cancelado
+}
+
+enum TipoPagamento {
+  pix_automatico
+  manual
+}
+
+enum TipoMovimentacao {
+  entrada
+  saida
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model Cliente {
+  id                String   @id @default(uuid())
+  nome              String
+  telefoneWhatsapp  String   @unique @map("telefone_whatsapp")
+  documento         String?
+  email             String?  @map("email")
+  criadoEm          DateTime @default(now()) @map("criado_em")
+
+  ordensServico     OrdemServico[]
+  conversasWhatsapp ConversaWhatsapp[]
+  notificacoesEnviadas NotificacaoEnviada[]
+  solicitacoesAtendimento SolicitacaoAtendimento[]
+  midiasOrdemServico MidiaOrdemServico[]
+  tokensPortal       TokenPortalCliente[]
+  respostasNps       RespostaNPS[]
+
+  @@map("clientes")
+}
+
+model Usuario {
+  id        String       @id @default(uuid())
+  nome      String
+  email     String       @unique
+  senhaHash String       @map("senha_hash")
+  papel     PapelUsuario
+  telefone  String?      @map("telefone")
+  valorHora Decimal?     @db.Decimal(10, 2) @map("valor_hora")
+  ativo     Boolean      @default(true)
+  criadoEm  DateTime     @default(now()) @map("criado_em")
+
+  resetSenhaTokenHash String?   @map("reset_senha_token_hash")
+  resetSenhaExpiraEm  DateTime? @map("reset_senha_expira_em")
+  expoPushToken       String?   @map("expo_push_token")
+
+  comissaoAtiva   Boolean  @default(false) @map("comissao_ativa")
+  comissaoPct     Float    @default(0)     @map("comissao_pct")
+
+  ordensAtribuidas     OrdemServico[] @relation("OrdemServicoTecnico")
+  ordensComoAjudante   OrdemServico[] @relation("OrdemServicoAjudante")
+  ordensCriadas        OrdemServico[] @relation("OrdemServicoCriadoPor")
+  historicosAlterados  HistoricoStatusOS[]
+  solicitacoesRespondidas SolicitacaoAtendimento[]
+  estimativasCriadas     EstimativaCustoOS[]
+  componentesCriados     ComponenteInstalado[]  @relation("ComponentesCriados")
+  documentosCarregados   DocumentoOS[]          @relation("DocumentosCarregados")
+  pendenciasCriadas      PendenciaOS[]          @relation("PendenciasCriadas")
+  respostasChecklist     RespostaChecklist[]    @relation("RespostasChecklist")
+  fotosServicoEnviadas   FotoServicoRealizado[] @relation("FotosServicoEnviadas")
+  pagamentosCriados      PagamentoOS[]          @relation("pagamentos_criados")
+  comissoes              ComissaoTecnico[]      @relation("comissoes_tecnico")
+  movimentacoesCriadas   MovimentacaoEstoque[]  @relation("movimentacoes_criadas")
+  apiKeys                ApiKey[]
+
+  @@index([resetSenhaTokenHash])
+  @@map("usuarios")
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  nome        String
+  hash        String    @unique
+  prefixo     String
+  ativa       Boolean   @default(true)
+  criadoPorId String    @map("criado_por_id")
+  criadoPor   Usuario   @relation(fields: [criadoPorId], references: [id])
+  criadoEm   DateTime  @default(now()) @map("criado_em")
+  ultimoUsoEm DateTime? @map("ultimo_uso_em")
+
+  @@map("api_keys")
+}
+
+model CategoriaServico {
+  id       String      @id @default(uuid())
+  nome     String
+  area     AreaServico
+  ativo    Boolean     @default(true)
+  criadoEm DateTime    @default(now()) @map("criado_em")
+
+  ordensServico    OrdemServico[]
+  templateChecklist TemplateChecklist[]
+
+  @@map("categorias_servico")
+}
+
+model OrdemServico {
+  id                    String       @id @default(uuid())
+  numero                String       @unique
+  clienteId             String       @map("cliente_id")
+  categoriaServicoId    String       @map("categoria_servico_id")
+  descricaoProblema     String       @map("descricao_problema")
+  enderecoAtendimento   String?      @map("endereco_atendimento")
+  prioridade            PrioridadeOS @default(normal)
+  status                StatusOS     @default(aberta)
+  tecnicoId             String?      @map("tecnico_id")
+  ajudanteId            String?      @map("ajudante_id")
+  criadoPorUsuarioId    String?      @map("criado_por_usuario_id")
+  criadoVia             CriadoVia    @map("criado_via")
+  dataAgendada          DateTime?    @map("data_agendada")
+  valorCobrado          Decimal?     @db.Decimal(10, 2) @map("valor_cobrado")
+  isPendente            Boolean      @default(false) @map("is_pendente")
+  slaVencido            Boolean      @default(false) @map("sla_vencido")
+  criadoEm              DateTime     @default(now()) @map("criado_em")
+  atualizadoEm          DateTime     @updatedAt @map("atualizado_em")
+  fechadoEm             DateTime?    @map("fechado_em")
+
+  cliente            Cliente          @relation(fields: [clienteId], references: [id])
+  categoriaServico   CategoriaServico @relation(fields: [categoriaServicoId], references: [id])
+  tecnico            Usuario?         @relation("OrdemServicoTecnico", fields: [tecnicoId], references: [id])
+  ajudante           Usuario?         @relation("OrdemServicoAjudante", fields: [ajudanteId], references: [id])
+  criadoPorUsuario   Usuario?         @relation("OrdemServicoCriadoPor", fields: [criadoPorUsuarioId], references: [id])
+
+  historicoStatus    HistoricoStatusOS[]
+  conversasWhatsapp  ConversaWhatsapp[]
+  notificacoesEnviadas NotificacaoEnviada[]
+  midiasOrdemServico MidiaOrdemServico[]
+  estimativaCusto    EstimativaCustoOS?
+  componentesInstalados ComponenteInstalado[]
+  documentos         DocumentoOS[]
+  pendencias         PendenciaOS[]
+  respostasChecklist RespostaChecklist[]
+  fotosServico       FotoServicoRealizado[]
+  assinatura         AssinaturaOS?
+  movimentacoes      MovimentacaoEstoque[]
+  consumosPecas      ConsumoOSPeca[]
+  custoTotalPecas        Float            @default(0) @map("custo_total_pecas")
+  statusPagamento        StatusPagamento  @default(pendente) @map("status_pagamento")
+  npsEnviadoEm           DateTime?        @map("nps_enviado_em")
+  respostaNps            RespostaNPS?
+  pagamentos             PagamentoOS[]
+  googleCalendarEventId  String?
+
+  @@index([status])
+  @@index([tecnicoId])
+  @@index([ajudanteId])
+  @@map("ordens_servico")
+}
+
+// Estimativa de custo de uma OS (mao de obra tecnico/ajudante + custos
+// operacionais). Relacao 1:1 com OrdemServico - upsert (uma unica estimativa
+// por OS, atualizada conforme o calculo evolui). Os valores de valor/hora sao
+// snapshots no momento do calculo e nao acompanham alteracoes posteriores no
+// cadastro do Usuario.
+model EstimativaCustoOS {
+  id                     String   @id @default(uuid())
+  ordemServicoId         String   @unique @map("ordem_servico_id")
+  horasEstimadasTecnico  Decimal  @db.Decimal(10, 2) @map("horas_estimadas_tecnico")
+  valorHoraTecnico       Decimal  @db.Decimal(10, 2) @map("valor_hora_tecnico")
+  horasEstimadasAjudante Decimal? @db.Decimal(10, 2) @map("horas_estimadas_ajudante")
+  valorHoraAjudante      Decimal? @db.Decimal(10, 2) @map("valor_hora_ajudante")
+  custoCombustivel       Decimal  @default(0) @db.Decimal(10, 2) @map("custo_combustivel")
+  custoPedagio           Decimal  @default(0) @db.Decimal(10, 2) @map("custo_pedagio")
+  custoDesgasteVeiculo   Decimal  @default(0) @db.Decimal(10, 2) @map("custo_desgaste_veiculo")
+  outrosCustos           Decimal  @default(0) @db.Decimal(10, 2) @map("outros_custos")
+  custoAlmoco            Decimal  @default(0) @db.Decimal(10, 2) @map("custo_almoco")
+  custoJanta             Decimal  @default(0) @db.Decimal(10, 2) @map("custo_janta")
+  custoEstadia           Decimal  @default(0) @db.Decimal(10, 2) @map("custo_estadia")
+  turno                  TurnoAtendimento @default(diurno) @map("turno")
+  custoAdicionalNoturno  Decimal  @default(0) @db.Decimal(10, 2) @map("custo_adicional_noturno")
+  custoTotal             Decimal  @db.Decimal(10, 2) @map("custo_total")
+  custoPecas             Float    @default(0) @map("custo_pecas")
+  criadoPorUsuarioId     String   @map("criado_por_usuario_id")
+  criadoEm               DateTime @default(now()) @map("criado_em")
+  atualizadoEm           DateTime @updatedAt @map("atualizado_em")
+
+  ordemServico     OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  criadoPorUsuario Usuario      @relation(fields: [criadoPorUsuarioId], references: [id])
+
+  @@map("estimativas_custo_os")
+}
+
+model HistoricoStatusOS {
+  id                    String    @id @default(uuid())
+  ordemServicoId        String    @map("ordem_servico_id")
+  statusAnterior        StatusOS? @map("status_anterior")
+  statusNovo            StatusOS  @map("status_novo")
+  alteradoPorUsuarioId  String?   @map("alterado_por_usuario_id")
+  alteradoPorBot        Boolean   @map("alterado_por_bot")
+  observacao            String?
+  criadoEm              DateTime  @default(now()) @map("criado_em")
+
+  ordemServico       OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  alteradoPorUsuario Usuario?     @relation(fields: [alteradoPorUsuarioId], references: [id])
+
+  @@index([ordemServicoId])
+  @@map("historico_status_os")
+}
+
+model ConversaWhatsapp {
+  id               String   @id @default(uuid())
+  clienteId        String   @map("cliente_id")
+  telefoneWhatsapp String   @map("telefone_whatsapp")
+  estadoFluxo      String   @map("estado_fluxo")
+  contextoDados    Json     @map("contexto_dados")
+  ordemServicoId   String?  @map("ordem_servico_id")
+  iniciadaEm       DateTime @default(now()) @map("iniciada_em")
+  atualizadaEm     DateTime @updatedAt @map("atualizada_em")
+
+  cliente      Cliente       @relation(fields: [clienteId], references: [id])
+  ordemServico OrdemServico? @relation(fields: [ordemServicoId], references: [id])
+
+  mensagens MensagemWhatsapp[]
+  solicitacoesAtendimento SolicitacaoAtendimento[]
+
+  @@index([clienteId])
+  @@index([telefoneWhatsapp])
+  @@map("conversas_whatsapp")
+}
+
+model MensagemWhatsapp {
+  id                 String          @id @default(uuid())
+  conversaId         String          @map("conversa_id")
+  direcao            DirecaoMensagem
+  tipoConteudo       String          @map("tipo_conteudo")
+  conteudo           String
+  whatsappMessageId  String          @unique @map("whatsapp_message_id")
+  statusEntrega      String?         @map("status_entrega")
+  criadoEm           DateTime        @default(now()) @map("criado_em")
+
+  conversa ConversaWhatsapp @relation(fields: [conversaId], references: [id])
+
+  @@index([conversaId])
+  @@map("mensagens_whatsapp")
+}
+
+// Midias (videos, e futuramente outros tipos) enviadas pelo cliente via
+// WhatsApp. Podem existir antes de uma OS estar formalmente vinculada a
+// conversa (ordemServicoId null nesse caso).
+model MidiaOrdemServico {
+  id                    String      @id @default(uuid())
+  ordemServicoId        String?     @map("ordem_servico_id")
+  clienteId             String      @map("cliente_id")
+  tipo                  TipoMidiaOS
+  caminhoArmazenamento  String      @map("caminho_armazenamento")
+  mimeType              String      @map("mime_type")
+  tamanhoBytes          Int         @map("tamanho_bytes")
+  whatsappMediaId       String?     @map("whatsapp_media_id")
+  criadoEm              DateTime    @default(now()) @map("criado_em")
+
+  ordemServico OrdemServico? @relation(fields: [ordemServicoId], references: [id])
+  cliente      Cliente       @relation(fields: [clienteId], references: [id])
+
+  @@index([ordemServicoId])
+  @@map("midias_ordem_servico")
+}
+
+// Contador auxiliar para geracao atomica do numero sequencial das Ordens de
+// Servico (formato OS-{ano}-{sequencial}). `chave` e a chave primaria, entao
+// o upsert (ON CONFLICT DO UPDATE) e atomico mesmo sob concorrencia.
+model Counter {
+  chave String @id
+  valor Int    @default(0)
+
+  @@map("counters")
+}
+
+model NotificacaoEnviada {
+  id               String                  @id @default(uuid())
+  ordemServicoId   String                  @map("ordem_servico_id")
+  clienteId        String                  @map("cliente_id")
+  tipoEvento       String                  @map("tipo_evento")
+  templateUsado    String?                 @map("template_usado")
+  statusEnvio      StatusEnvioNotificacao  @default(pendente) @map("status_envio")
+  tentativas       Int                     @default(0)
+  criadoEm         DateTime                @default(now()) @map("criado_em")
+  enviadoEm        DateTime?               @map("enviado_em")
+
+  ordemServico OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  cliente      Cliente      @relation(fields: [clienteId], references: [id])
+
+  @@index([ordemServicoId])
+  @@index([clienteId])
+  @@map("notificacoes_enviadas")
+}
+
+// Base de conhecimento do chatbot (FAQ), gerenciavel pelo admin.
+model FaqEntry {
+  id           String   @id @default(uuid())
+  pergunta     String
+  resposta     String
+  tags         String?
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  @@map("faq_entries")
+}
+
+// Fila de perguntas que o bot nao soube responder e escalou para atendimento humano.
+model SolicitacaoAtendimento {
+  id                     String                       @id @default(uuid())
+  clienteId              String                       @map("cliente_id")
+  conversaId             String?                      @map("conversa_id")
+  mensagemCliente        String                       @map("mensagem_cliente")
+  status                 StatusSolicitacaoAtendimento @default(pendente)
+  respostaTexto          String?                      @map("resposta_texto")
+  respondidoPorUsuarioId String?                      @map("respondido_por_usuario_id")
+  salvarComoFaq          Boolean                      @default(false) @map("salvar_como_faq")
+  criadoEm               DateTime                     @default(now()) @map("criado_em")
+  respondidoEm           DateTime?                    @map("respondido_em")
+
+  cliente              Cliente           @relation(fields: [clienteId], references: [id])
+  conversa             ConversaWhatsapp? @relation(fields: [conversaId], references: [id])
+  respondidoPorUsuario Usuario?          @relation(fields: [respondidoPorUsuarioId], references: [id])
+
+  @@index([status])
+  @@map("solicitacoes_atendimento")
+}
+
+// Componentes instalados em campo durante uma OS — rastreabilidade por numero de
+// serie, garantia e documentos associados (manuais, certificados, notas fiscais).
+model ComponenteInstalado {
+  id                   String    @id @default(uuid())
+  ordemServicoId       String    @map("ordem_servico_id")
+  nome                 String
+  fabricante           String?
+  modelo               String?
+  numeroSerie          String?   @map("numero_serie")
+  codigoBarras         String?   @map("codigo_barras")
+  garantiaMeses        Int?      @map("garantia_meses")
+  garantiaExpiraEm     DateTime? @map("garantia_expira_em")
+  observacoes          String?
+  criadoPorUsuarioId   String?   @map("criado_por_usuario_id")
+  criadoEm             DateTime  @default(now()) @map("criado_em")
+  atualizadoEm         DateTime  @updatedAt @map("atualizado_em")
+
+  ordemServico       OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  criadoPorUsuario   Usuario?     @relation("ComponentesCriados", fields: [criadoPorUsuarioId], references: [id])
+  documentos              DocumentoOS[]
+  alertasGarantia         AlertaGarantia[]
+  manutencoesPreventivas  ManutencaoPreventiva[]
+
+  @@index([ordemServicoId])
+  @@index([numeroSerie])
+  @@map("componentes_instalados")
+}
+
+// Documentos vinculados a uma OS (e opcionalmente a um componente especifico).
+// Exemplos: certificado de garantia, manual tecnico, laudo, nota fiscal.
+// Projetado para auditoria: nunca deletado fisicamente, apenas marcado como inativo.
+model DocumentoOS {
+  id                    String          @id @default(uuid())
+  ordemServicoId        String          @map("ordem_servico_id")
+  componenteInstaladoId String?         @map("componente_instalado_id")
+  nome                  String
+  tipoDocumento         TipoDocumentoOS @map("tipo_documento")
+  caminhoArmazenamento  String          @map("caminho_armazenamento")
+  mimeType              String          @map("mime_type")
+  tamanhoBytes          Int             @map("tamanho_bytes")
+  ativo                 Boolean         @default(true)
+  carregadoPorUsuarioId String?         @map("carregado_por_usuario_id")
+  criadoEm              DateTime        @default(now()) @map("criado_em")
+
+  ordemServico        OrdemServico         @relation(fields: [ordemServicoId], references: [id])
+  componenteInstalado ComponenteInstalado? @relation(fields: [componenteInstaladoId], references: [id])
+  carregadoPorUsuario Usuario?             @relation("DocumentosCarregados", fields: [carregadoPorUsuarioId], references: [id])
+
+  @@index([ordemServicoId])
+  @@index([componenteInstaladoId])
+  @@map("documentos_os")
+}
+
+enum AcaoAuditoria {
+  criar
+  atualizar
+  apagar
+  consultar
+}
+
+model AuditLog {
+  id              String        @id @default(uuid())
+  entidade        String
+  entidadeId      String        @map("entidade_id")
+  acao            AcaoAuditoria
+  dadosAnteriores Json?         @map("dados_anteriores")
+  dadosNovos      Json?         @map("dados_novos")
+  usuarioId       String?       @map("usuario_id")
+  nomeUsuario     String?       @map("nome_usuario")
+  ipAddress       String?       @map("ip_address")
+  userAgent       String?       @map("user_agent")
+  descricao       String?
+  criadoEm        DateTime      @default(now()) @map("criado_em")
+
+  @@index([entidade, entidadeId])
+  @@index([usuarioId])
+  @@index([criadoEm])
+  @@map("audit_log")
+}
+
+// ---------------------------------------------------------------------------
+// Pendencias de OS
+// ---------------------------------------------------------------------------
+
+model PendenciaOS {
+  id             String   @id @default(uuid())
+  ordemServicoId String   @map("ordem_servico_id")
+  observacao     String
+  criadoPorId    String?  @map("criado_por_id")
+  criadoEm       DateTime @default(now()) @map("criado_em")
+
+  ordemServico OrdemServico    @relation(fields: [ordemServicoId], references: [id])
+  criadoPor    Usuario?        @relation("PendenciasCriadas", fields: [criadoPorId], references: [id])
+  fotos        FotoPendencia[]
+
+  @@index([ordemServicoId])
+  @@map("pendencias_os")
+}
+
+model FotoPendencia {
+  id          String   @id @default(uuid())
+  pendenciaId String   @map("pendencia_id")
+  mimeType    String   @map("mime_type")
+  base64      String   @db.Text
+  criadoEm    DateTime @default(now()) @map("criado_em")
+
+  pendencia PendenciaOS @relation(fields: [pendenciaId], references: [id])
+
+  @@index([pendenciaId])
+  @@map("fotos_pendencia")
+}
+
+// ---------------------------------------------------------------------------
+// Checklists
+// ---------------------------------------------------------------------------
+
+model TemplateChecklist {
+  id                 String   @id @default(uuid())
+  categoriaServicoId String   @map("categoria_servico_id")
+  titulo             String
+  ativo              Boolean  @default(true)
+  criadoEm           DateTime @default(now()) @map("criado_em")
+
+  categoriaServico CategoriaServico @relation(fields: [categoriaServicoId], references: [id])
+  itens            ItemChecklist[]
+
+  @@index([categoriaServicoId])
+  @@map("templates_checklist")
+}
+
+model ItemChecklist {
+  id         String @id @default(uuid())
+  templateId String @map("template_id")
+  descricao  String
+  ordem      Int    @default(0)
+
+  template  TemplateChecklist   @relation(fields: [templateId], references: [id])
+  respostas RespostaChecklist[]
+
+  @@map("itens_checklist")
+}
+
+model RespostaChecklist {
+  id              String   @id @default(uuid())
+  ordemServicoId  String   @map("ordem_servico_id")
+  itemId          String   @map("item_id")
+  marcado         Boolean  @default(false)
+  respondidoPorId String?  @map("respondido_por_id")
+  respondidoEm    DateTime @default(now()) @map("respondido_em")
+
+  ordemServico  OrdemServico  @relation(fields: [ordemServicoId], references: [id])
+  item          ItemChecklist @relation(fields: [itemId], references: [id])
+  respondidoPor Usuario?      @relation("RespostasChecklist", fields: [respondidoPorId], references: [id])
+
+  @@unique([ordemServicoId, itemId])
+  @@index([ordemServicoId])
+  @@map("respostas_checklist")
+}
+
+model AlertaGarantia {
+  id            String              @id @default(uuid())
+  componenteId  String              @map("componente_id")
+  diasRestantes Int                 @map("dias_restantes")
+  lido          Boolean             @default(false)
+  criadoEm      DateTime            @default(now()) @map("criado_em")
+  componente    ComponenteInstalado @relation(fields: [componenteId], references: [id])
+
+  @@map("alertas_garantia")
+}
+
+model SlaConfig {
+  id           String       @id @default(uuid())
+  prioridade   PrioridadeOS @unique
+  prazoHoras   Int          @map("prazo_horas")
+  atualizadoEm DateTime     @updatedAt @map("atualizado_em")
+
+  @@map("sla_config")
+}
+
+model ConfigRelatorioGerencial {
+  id           String   @id @default(uuid())
+  frequencia   String
+  emailDestino String   @map("email_destino")
+  ativo        Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  @@map("config_relatorio_gerencial")
+}
+
+// ---------------------------------------------------------------------------
+// Fotos de servico realizado
+// ---------------------------------------------------------------------------
+
+model FotoServicoRealizado {
+  id             String   @id @default(uuid())
+  ordemServicoId String   @map("ordem_servico_id")
+  mimeType       String   @map("mime_type")
+  base64         String   @db.Text
+  legenda        String?
+  enviadoPorId   String?  @map("enviado_por_id")
+  criadoEm       DateTime @default(now()) @map("criado_em")
+
+  ordemServico OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  enviadoPor   Usuario?     @relation("FotosServicoEnviadas", fields: [enviadoPorId], references: [id])
+
+  @@index([ordemServicoId])
+  @@map("fotos_servico_realizado")
+}
+
+model TokenPortalCliente {
+  id        String    @id @default(uuid())
+  clienteId String    @map("cliente_id")
+  token     String    @unique
+  expiraEm  DateTime  @map("expira_em")
+  usadoEm   DateTime? @map("usado_em")
+  criadoEm  DateTime  @default(now()) @map("criado_em")
+  cliente   Cliente   @relation(fields: [clienteId], references: [id])
+
+  @@map("tokens_portal_cliente")
+}
+
+model RespostaNPS {
+  id             String       @id @default(uuid())
+  ordemServicoId String       @map("ordem_servico_id")
+  clienteId      String       @map("cliente_id")
+  nota           Int
+  comentario     String?      @db.Text
+  criadoEm       DateTime     @default(now()) @map("criado_em")
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  cliente        Cliente      @relation(fields: [clienteId], references: [id])
+
+  @@unique([ordemServicoId])
+  @@map("respostas_nps")
+}
+
+model PagamentoOS {
+  id                String          @id @default(uuid())
+  ordemServicoId    String          @map("ordem_servico_id")
+  tipo              TipoPagamento
+  valor             Float
+  statusPagamento   StatusPagamento @default(pendente) @map("status_pagamento")
+  pixQrCode         String?         @db.Text @map("pix_qr_code")
+  pixCopiaECola     String?         @db.Text @map("pix_copia_e_cola")
+  mercadoPagoId     String?         @map("mercado_pago_id")
+  observacao        String?         @db.Text
+  pagoEm            DateTime?       @map("pago_em")
+  criadoPorId       String?         @map("criado_por_id")
+  criadoEm          DateTime        @default(now()) @map("criado_em")
+
+  ordemServico OrdemServico    @relation(fields: [ordemServicoId], references: [id])
+  criadoPor    Usuario?        @relation("pagamentos_criados", fields: [criadoPorId], references: [id])
+  comissao     ComissaoTecnico?
+
+  @@map("pagamentos_os")
+}
+
+model ComissaoTecnico {
+  id            String      @id @default(uuid())
+  tecnicoId     String      @map("tecnico_id")
+  pagamentoOSId String      @unique @map("pagamento_os_id")
+  valor         Float
+  percentual    Float
+  criadoEm      DateTime    @default(now()) @map("criado_em")
+
+  tecnico     Usuario     @relation("comissoes_tecnico", fields: [tecnicoId], references: [id])
+  pagamentoOS PagamentoOS @relation(fields: [pagamentoOSId], references: [id])
+
+  @@map("comissoes_tecnico")
+}
+
+model AssinaturaOS {
+  id             String       @id @default(uuid())
+  ordemServicoId String       @unique @map("ordem_servico_id")
+  imagemBase64   String       @map("imagem_base64") @db.Text
+  criadoEm       DateTime     @default(now()) @map("criado_em")
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id])
+
+  @@map("assinaturas_os")
+}
+
+// ---------------------------------------------------------------------------
+// Estoque de peças
+// ---------------------------------------------------------------------------
+
+model Peca {
+  id            String   @id @default(uuid())
+  codigo        String   @unique
+  nome          String
+  descricao     String?  @db.Text
+  unidade       String   @default("un")
+  precoUnitario Float    @map("preco_unitario")
+  estoqueAtual  Float    @default(0) @map("estoque_atual")
+  estoqueMinimo Float    @default(0) @map("estoque_minimo")
+  ativo         Boolean  @default(true)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+  atualizadoEm DateTime @updatedAt @map("atualizado_em")
+
+  movimentacoes MovimentacaoEstoque[]
+  consumosOS    ConsumoOSPeca[]
+
+  @@map("pecas")
+}
+
+model MovimentacaoEstoque {
+  id             String           @id @default(uuid())
+  pecaId         String           @map("peca_id")
+  tipo           TipoMovimentacao
+  quantidade     Float
+  precoUnitario  Float            @map("preco_unitario")
+  ordemServicoId String?          @map("ordem_servico_id")
+  observacao     String?          @db.Text
+  criadoPorId    String?          @map("criado_por_id")
+  criadoEm      DateTime         @default(now()) @map("criado_em")
+
+  peca         Peca          @relation(fields: [pecaId], references: [id])
+  ordemServico OrdemServico? @relation(fields: [ordemServicoId], references: [id])
+  criadoPor    Usuario?      @relation("movimentacoes_criadas", fields: [criadoPorId], references: [id])
+
+  @@map("movimentacoes_estoque")
+}
+
+model ConsumoOSPeca {
+  id             String       @id @default(uuid())
+  ordemServicoId String       @map("ordem_servico_id")
+  pecaId         String       @map("peca_id")
+  quantidade     Float
+  precoUnitario  Float        @map("preco_unitario")
+  subtotal       Float
+  criadoEm      DateTime     @default(now()) @map("criado_em")
+
+  ordemServico OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  peca         Peca         @relation(fields: [pecaId], references: [id])
+
+  @@map("consumos_os_peca")
+}
+
+model ManutencaoPreventiva {
+  id                    String              @id @default(uuid())
+  componenteInstaladoId String              @map("componente_instalado_id")
+  intervaloDias         Int                 @map("intervalo_dias")
+  ultimaRealizadaEm     DateTime?           @map("ultima_realizada_em")
+  proximaEm             DateTime            @map("proxima_em")
+  notificadoEm          DateTime?           @map("notificado_em")
+  criadoEm             DateTime            @default(now()) @map("criado_em")
+
+  componenteInstalado ComponenteInstalado @relation(fields: [componenteInstaladoId], references: [id])
+
+  @@map("manutencoes_preventivas")
+}

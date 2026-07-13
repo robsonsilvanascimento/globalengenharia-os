@@ -1,0 +1,77 @@
+.sla-config-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 480px;
+}
+
+.sla-config-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sla-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sla-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sla-config-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: capitalize;
+}
+
+.sla-config-input {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  width: 100%;
+}
+
+.sla-config-input:focus {
+  border-color: #2563eb;
+}
+
+.sla-config-error {
+  font-size: 0.85rem;
+  color: #dc2626;
+}
+
+.sla-config-success {
+  font-size: 0.85rem;
+  color: #15803d;
+}
+
+.sla-config-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.sla-config-submit {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sla-config-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

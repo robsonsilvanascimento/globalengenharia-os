@@ -1,0 +1,57 @@
+.categoria-servico-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.categoria-servico-form-input {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+}
+
+.categoria-servico-form-input:focus {
+  border-color: #2563eb;
+}
+
+.categoria-servico-form-error {
+  font-size: 0.85rem;
+  color: #dc2626;
+}
+
+.categoria-servico-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.categoria-servico-form-cancel {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #334155;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.categoria-servico-form-submit {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.categoria-servico-form-submit:disabled,
+.categoria-servico-form-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

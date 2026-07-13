@@ -1,0 +1,192 @@
+/*
+ * Estilos compartilhados pelas páginas de "esqueci minha senha" e
+ * "redefinir senha". Mesmo padrão visual/animações de LoginPage.css
+ * (não editado diretamente), reaproveitado aqui para não duplicar/depender
+ * de nomes de classe da página de login.
+ */
+
+@keyframes auth-page-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes auth-page-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+@keyframes auth-page-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes auth-page-bg-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(120deg, #e0e7ff, #f1f5f9, #dbeafe, #e0f2fe);
+  background-size: 300% 300%;
+  animation: auth-page-bg-shift 18s ease infinite;
+}
+
+.auth-page-form {
+  width: 100%;
+  max-width: 380px;
+  padding: 40px 36px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 45px rgba(30, 41, 59, 0.12), 0 2px 6px rgba(30, 41, 59, 0.06);
+  animation: auth-page-fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-page-title {
+  margin: 0 0 12px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+}
+
+.auth-page-subtitle {
+  margin: 0 0 24px;
+  font-size: 0.85rem;
+  color: #475569;
+  text-align: center;
+}
+
+.auth-page-input {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 0.92rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.auth-page-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  transform: translateY(-1px);
+}
+
+.auth-page-password-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.auth-page-password-wrapper .auth-page-input {
+  flex: 1;
+  padding-right: 42px;
+}
+
+.auth-page-toggle-senha {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%) scale(1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.auth-page-toggle-senha:hover {
+  background-color: #eff6ff;
+}
+
+.auth-page-toggle-senha:active {
+  transform: translateY(-50%) scale(0.85);
+}
+
+.auth-page-error {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: #dc2626;
+  animation: auth-page-shake 0.4s ease;
+}
+
+.auth-page-success {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: #15803d;
+  text-align: center;
+  animation: auth-page-pop-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-page-submit {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.auth-page-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.36);
+}
+
+.auth-page-submit:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.auth-page-submit:disabled {
+  background-color: #93c5fd;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.auth-page-back-link {
+  display: block;
+  margin-top: 18px;
+  font-size: 0.85rem;
+  color: #2563eb;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.auth-page-back-link:hover {
+  opacity: 0.7;
+  text-decoration: underline;
+}
