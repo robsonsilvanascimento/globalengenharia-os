@@ -58,7 +58,7 @@ export function PendenciasSection({ osId }: Props) {
                   Por {p.criado_por_nome} — {new Date(p.criado_em).toLocaleString('pt-BR')}
                 </p>
               )}
-              {p.fotos.length > 0 && (
+              {p.fotos?.length > 0 && (
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {p.fotos.map((f) => (
                     <img
