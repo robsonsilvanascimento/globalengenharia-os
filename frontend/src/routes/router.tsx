@@ -1,4 +1,24 @@
+import { Component, type ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom';
+
+class OsDetailErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: '2rem', color: '#dc2626' }}>
+          <h2>Erro ao carregar a OS</h2>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8rem' }}>{this.state.error.message}{'\n'}{this.state.error.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { LoginPage } from '../features/auth/LoginPage';
 import { EsqueciSenhaPage } from '../features/auth/EsqueciSenhaPage';
 import { RedefinirSenhaPage } from '../features/auth/RedefinirSenhaPage';
@@ -66,7 +86,11 @@ export function AppRoutes() {
           }
         />
 
-        <Route path="/ordens-servico/:id" element={<OrdemServicoDetailPage />} />
+        <Route path="/ordens-servico/:id" element={
+          <OsDetailErrorBoundary>
+            <OrdemServicoDetailPage />
+          </OsDetailErrorBoundary>
+        } />
 
         <Route
           path="/usuarios"
