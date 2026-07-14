@@ -286,7 +286,12 @@ export function OrdemServicoDetailPage() {
   }
 
   if (ordemQuery.isError || !ordemQuery.data) {
-    return <ErrorState message={errorMessage(ordemQuery.error)} onRetry={() => ordemQuery.refetch()} />;
+    const errMsg = ordemQuery.error instanceof ApiError
+      ? `Erro ${ordemQuery.error.status}: ${ordemQuery.error.message}`
+      : ordemQuery.error instanceof Error
+        ? ordemQuery.error.message
+        : 'Erro ao carregar a ordem de serviço.';
+    return <ErrorState message={errMsg} onRetry={() => ordemQuery.refetch()} />;
   }
 
   const ordem = ordemQuery.data;
