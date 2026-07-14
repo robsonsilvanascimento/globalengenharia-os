@@ -46,7 +46,8 @@ const listQuerySchema = z.object({
 
 const entradaBody = z.object({
   quantidade: z.number().positive(),
-  preco_unitario: z.number().positive(),
+  preco_unitario: z.number().positive().optional(),
+  precoUnitario: z.number().positive().optional(),
   observacao: z.string().optional(),
 });
 
@@ -186,12 +187,14 @@ export function registerEstoqueRoutes(app: FastifyInstance, { prisma }: EstoqueR
       throw new NotFoundError('Peca nao encontrada');
     }
 
+    const precoUnitario = body.precoUnitario ?? body.preco_unitario ?? Number(existente.precoUnitario);
+
     const movimentacao = await prisma.$transaction(async (tx) => {
       const mov = await tx.movimentacaoEstoque.create({
         data: {
           tipo: 'entrada',
           quantidade: body.quantidade,
-          precoUnitario: body.preco_unitario,
+          precoUnitario,
           observacao: body.observacao,
           pecaId: id,
           criadoPorId: request.user!.id,
@@ -202,7 +205,7 @@ export function registerEstoqueRoutes(app: FastifyInstance, { prisma }: EstoqueR
         where: { id },
         data: {
           estoqueAtual: { increment: body.quantidade },
-          precoUnitario: body.preco_unitario,
+          precoUnitario,
         },
       });
 
