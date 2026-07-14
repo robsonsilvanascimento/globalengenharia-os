@@ -432,30 +432,30 @@ export interface Peca {
   nome: string;
   descricao?: string | null;
   unidade: string;
-  preco_unitario: number;
-  estoque_atual: number;
-  estoque_minimo: number;
+  precoUnitario: number;
+  estoqueAtual: number;
+  estoqueMinimo: number;
   ativo: boolean;
-  criado_em: string;
+  criadoEm: string;
 }
 
 export interface MovimentacaoEstoque {
   id: string;
-  peca_id: string;
+  pecaId: string;
   tipo: TipoMovimentacao;
   quantidade: number;
-  preco_unitario: number;
-  ordem_servico_id?: string | null;
+  precoUnitario: number;
+  ordemServicoId?: string | null;
   observacao?: string | null;
-  criado_em: string;
+  criadoEm: string;
 }
 
 export interface ConsumoOSPeca {
   id: string;
-  peca_id: string;
-  ordem_servico_id: string;
+  pecaId: string;
+  ordemServicoId: string;
   quantidade: number;
-  preco_unitario: number;
+  precoUnitario: number;
   subtotal: number;
   criado_em: string;
   peca?: { nome: string; codigo: string; unidade: string };

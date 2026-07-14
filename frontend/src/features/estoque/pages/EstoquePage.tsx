@@ -17,9 +17,9 @@ interface PecaFormData {
   nome: string;
   descricao: string;
   unidade: string;
-  preco_unitario: string;
-  estoque_atual: string;
-  estoque_minimo: string;
+  precoUnitario: string;
+  estoqueAtual: string;
+  estoqueMinimo: string;
 }
 
 const PECA_FORM_VAZIO: PecaFormData = {
@@ -27,9 +27,9 @@ const PECA_FORM_VAZIO: PecaFormData = {
   nome: '',
   descricao: '',
   unidade: '',
-  preco_unitario: '',
-  estoque_atual: '',
-  estoque_minimo: '',
+  precoUnitario: '',
+  estoqueAtual: '',
+  estoqueMinimo: '',
 };
 
 function pecaParaForm(p: Peca): PecaFormData {
@@ -38,9 +38,9 @@ function pecaParaForm(p: Peca): PecaFormData {
     nome: p.nome,
     descricao: p.descricao ?? '',
     unidade: p.unidade,
-    preco_unitario: String(p.preco_unitario),
-    estoque_atual: String(p.estoque_atual),
-    estoque_minimo: String(p.estoque_minimo),
+    precoUnitario: String(p.precoUnitario),
+    estoqueAtual: String(p.estoqueAtual),
+    estoqueMinimo: String(p.estoqueMinimo),
   };
 }
 
@@ -63,7 +63,7 @@ export default function EstoquePage() {
   const atualizarPeca = useAtualizarPeca(pecaEditando?.id ?? '');
   const entradaEstoque = useEntradaEstoque(pecaEntrada?.id ?? '');
 
-  const alertas = pecas.filter((p) => p.estoque_atual <= p.estoque_minimo);
+  const alertas = pecas.filter((p) => p.estoqueAtual <= p.estoqueMinimo);
 
   function abrirModalNovaPeca() {
     setPecaEditando(null);
@@ -101,9 +101,9 @@ export default function EstoquePage() {
       nome: formPeca.nome,
       descricao: formPeca.descricao || undefined,
       unidade: formPeca.unidade,
-      preco_unitario: parseFloat(formPeca.preco_unitario),
-      estoque_atual: parseFloat(formPeca.estoque_atual),
-      estoque_minimo: parseFloat(formPeca.estoque_minimo),
+      precoUnitario: parseFloat(formPeca.precoUnitario),
+      estoqueAtual: parseFloat(formPeca.estoqueAtual),
+      estoqueMinimo: parseFloat(formPeca.estoqueMinimo),
     };
 
     if (pecaEditando) {
@@ -197,18 +197,18 @@ export default function EstoquePage() {
                 </thead>
                 <tbody>
                   {pecas.map((p) => {
-                    const baixo = p.estoque_atual <= p.estoque_minimo;
+                    const baixo = p.estoqueAtual <= p.estoqueMinimo;
                     return (
                       <tr key={p.id} className={baixo ? 'linha-baixo' : ''}>
                         <td>{p.codigo}</td>
                         <td>{p.nome}</td>
                         <td>{p.unidade}</td>
-                        <td>{currencyFormatter.format(Number(p.preco_unitario))}</td>
+                        <td>{currencyFormatter.format(Number(p.precoUnitario))}</td>
                         <td>
-                          {p.estoque_atual}
+                          {p.estoqueAtual}
                           {baixo && <span className="badge-baixo">Baixo</span>}
                         </td>
-                        <td>{p.estoque_minimo}</td>
+                        <td>{p.estoqueMinimo}</td>
                         <td>
                           <span className={p.ativo ? 'badge-ativo' : 'badge-inativo'}>
                             {p.ativo ? 'Ativo' : 'Inativo'}
@@ -259,7 +259,7 @@ export default function EstoquePage() {
                     <strong>{p.nome}</strong>
                     <span className="alerta-codigo">{p.codigo}</span>
                     <span className="alerta-estoque">
-                      Atual: <strong className="txt-vermelho">{p.estoque_atual}</strong> / Mínimo: {p.estoque_minimo}
+                      Atual: <strong className="txt-vermelho">{p.estoqueAtual}</strong> / Mínimo: {p.estoqueMinimo}
                     </span>
                   </div>
                   <button
@@ -320,8 +320,8 @@ export default function EstoquePage() {
                   required
                   min="0"
                   step="0.01"
-                  value={formPeca.preco_unitario}
-                  onChange={(e) => setFormPeca((f) => ({ ...f, preco_unitario: e.target.value }))}
+                  value={formPeca.precoUnitario}
+                  onChange={(e) => setFormPeca((f) => ({ ...f, precoUnitario: e.target.value }))}
                 />
               </label>
               <label>
@@ -331,8 +331,8 @@ export default function EstoquePage() {
                   required
                   min="0"
                   step="1"
-                  value={formPeca.estoque_atual}
-                  onChange={(e) => setFormPeca((f) => ({ ...f, estoque_atual: e.target.value }))}
+                  value={formPeca.estoqueAtual}
+                  onChange={(e) => setFormPeca((f) => ({ ...f, estoqueAtual: e.target.value }))}
                 />
               </label>
               <label>
@@ -342,8 +342,8 @@ export default function EstoquePage() {
                   required
                   min="0"
                   step="1"
-                  value={formPeca.estoque_minimo}
-                  onChange={(e) => setFormPeca((f) => ({ ...f, estoque_minimo: e.target.value }))}
+                  value={formPeca.estoqueMinimo}
+                  onChange={(e) => setFormPeca((f) => ({ ...f, estoqueMinimo: e.target.value }))}
                 />
               </label>
               <div className="modal-acoes">
