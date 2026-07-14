@@ -203,7 +203,7 @@ export default function EstoquePage() {
                         <td>{p.codigo}</td>
                         <td>{p.nome}</td>
                         <td>{p.unidade}</td>
-                        <td>{currencyFormatter.format(p.preco_unitario)}</td>
+                        <td>{currencyFormatter.format(Number(p.preco_unitario))}</td>
                         <td>
                           {p.estoque_atual}
                           {baixo && <span className="badge-baixo">Baixo</span>}
