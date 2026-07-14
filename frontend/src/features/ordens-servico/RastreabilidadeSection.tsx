@@ -367,10 +367,11 @@ export function RastreabilidadeSection({ ordemServicoId, isAdmin, isTecnico }: R
   const invalidar = () =>
     queryClient.invalidateQueries({ queryKey: ['ordens-servico', ordemServicoId, 'rastreabilidade'] });
 
-  if (rastreabilidadeQuery.isLoading) return <LoadingState message="Carregando rastreabilidade..." />;
+  if (rastreabilidadeQuery.isLoading || rastreabilidadeQuery.isPending) return <LoadingState message="Carregando rastreabilidade..." />;
   if (rastreabilidadeQuery.isError) return <ErrorState message="Erro ao carregar rastreabilidade." onRetry={() => rastreabilidadeQuery.refetch()} />;
+  if (!rastreabilidadeQuery.data) return null;
 
-  const dados = rastreabilidadeQuery.data!;
+  const dados = rastreabilidadeQuery.data;
 
   return (
     <section className="rastreabilidade-section">
