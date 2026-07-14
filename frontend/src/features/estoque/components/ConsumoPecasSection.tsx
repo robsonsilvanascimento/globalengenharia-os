@@ -65,7 +65,7 @@ export function ConsumoPecasSection({ osId }: ConsumoPecasSectionProps) {
       return;
     }
     adicionarMutation.mutate(
-      { peca_id: selectedPecaId, quantidade: qtd, precoUnitario: preco },
+      { pecaId: selectedPecaId, quantidade: qtd, precoUnitario: preco },
       {
         onSuccess: () => {
           setIsModalOpen(false);
