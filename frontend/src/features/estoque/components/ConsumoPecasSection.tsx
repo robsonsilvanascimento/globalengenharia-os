@@ -35,7 +35,7 @@ export function ConsumoPecasSection({ osId }: ConsumoPecasSectionProps) {
     setSelectedPecaId(pecaId);
     const peca = pecasQuery.data?.find((p: Peca) => p.id === pecaId);
     if (peca) {
-      setPrecoUnitario(String(peca.preco_unitario));
+      setPrecoUnitario(String(peca.precoUnitario));
     } else {
       setPrecoUnitario('');
     }
@@ -65,7 +65,7 @@ export function ConsumoPecasSection({ osId }: ConsumoPecasSectionProps) {
       return;
     }
     adicionarMutation.mutate(
-      { peca_id: selectedPecaId, quantidade: qtd, preco_unitario: preco },
+      { peca_id: selectedPecaId, quantidade: qtd, precoUnitario: preco },
       {
         onSuccess: () => {
           setIsModalOpen(false);
@@ -122,7 +122,7 @@ export function ConsumoPecasSection({ osId }: ConsumoPecasSectionProps) {
                     <td style={{ padding: '0.5rem' }}>{c.peca?.codigo ?? '—'}</td>
                     <td style={{ padding: '0.5rem' }}>{c.peca?.nome ?? '—'}</td>
                     <td style={{ padding: '0.5rem' }}>{c.quantidade}</td>
-                    <td style={{ padding: '0.5rem' }}>{currencyFormatter.format(c.preco_unitario)}</td>
+                    <td style={{ padding: '0.5rem' }}>{currencyFormatter.format(c.precoUnitario)}</td>
                     <td style={{ padding: '0.5rem' }}>{currencyFormatter.format(c.subtotal)}</td>
                     {isAdmin && (
                       <td style={{ padding: '0.5rem' }}>

@@ -16,9 +16,9 @@ interface CriarPecaBody {
   nome: string;
   descricao?: string;
   unidade: string;
-  preco_unitario: number;
-  estoque_atual: number;
-  estoque_minimo: number;
+  precoUnitario: number;
+  estoqueAtual: number;
+  estoqueMinimo: number;
 }
 
 interface EntradaEstoqueBody {
