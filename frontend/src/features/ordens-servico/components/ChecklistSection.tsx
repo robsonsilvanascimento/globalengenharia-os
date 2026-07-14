@@ -17,7 +17,7 @@ export function ChecklistSection({ osId }: Props) {
   function getMarcado(itemId: string): boolean {
     const override = respostas.find((r) => r.item_id === itemId);
     if (override) return override.marcado;
-    return checklist?.respostas.find((r) => r.item_id === itemId)?.marcado ?? false;
+    return checklist?.respostas?.find((r) => r.item_id === itemId)?.marcado ?? false;
   }
 
   function handleToggle(itemId: string) {
