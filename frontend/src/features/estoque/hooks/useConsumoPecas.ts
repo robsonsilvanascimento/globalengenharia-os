@@ -13,7 +13,7 @@ export function useConsumoPecas(osId: string) {
 export function useAdicionarConsumoPeca(osId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { peca_id: string; quantidade: number; preco_unitario?: number }) =>
+    mutationFn: (data: { pecaId: string; quantidade: number; precoUnitario?: number }) =>
       httpClient.post(`/ordens-servico/${osId}/consumo-pecas`, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['consumo-pecas', osId] }),
   });
