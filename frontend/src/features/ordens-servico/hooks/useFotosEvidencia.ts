@@ -4,8 +4,8 @@ import type { FotoBase64Upload, FotoEvidencia, FotosEvidenciaResponse } from '..
 
 export function useFotosEvidencia(osId: string) {
   return useQuery({
-    queryKey: ['ordens-servico', osId, 'fotos-evidencia'],
-    queryFn: () => httpClient.get<FotosEvidenciaResponse>(`/ordens-servico/${osId}/fotos-evidencia`),
+    queryKey: ['ordens-servico', osId, 'fotos-servico'],
+    queryFn: () => httpClient.get<FotosEvidenciaResponse>(`/ordens-servico/${osId}/fotos-servico`),
     enabled: Boolean(osId),
   });
 }
@@ -15,9 +15,9 @@ export function useAdicionarFotoEvidencia(osId: string) {
 
   return useMutation({
     mutationFn: (body: FotoBase64Upload) =>
-      httpClient.post<FotoEvidencia>(`/ordens-servico/${osId}/fotos-evidencia`, body),
+      httpClient.post<FotoEvidencia>(`/ordens-servico/${osId}/fotos-servico`, body),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['ordens-servico', osId, 'fotos-evidencia'] });
+      void queryClient.invalidateQueries({ queryKey: ['ordens-servico', osId, 'fotos-servico'] });
     },
   });
 }
