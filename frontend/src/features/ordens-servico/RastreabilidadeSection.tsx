@@ -372,6 +372,8 @@ export function RastreabilidadeSection({ ordemServicoId, isAdmin, isTecnico }: R
   if (!rastreabilidadeQuery.data) return null;
 
   const dados = rastreabilidadeQuery.data;
+  const componentes = dados.componentes ?? [];
+  const documentosSemComponente = dados.documentos_sem_componente ?? [];
 
   return (
     <section className="rastreabilidade-section">
@@ -388,11 +390,11 @@ export function RastreabilidadeSection({ ordemServicoId, isAdmin, isTecnico }: R
         )}
       </div>
 
-      {dados.componentes.length === 0 && dados.documentos_sem_componente.length === 0 && (
+      {componentes.length === 0 && documentosSemComponente.length === 0 && (
         <p className="rastreabilidade-empty">Nenhum componente ou documento registrado nesta OS.</p>
       )}
 
-      {dados.componentes.map((c) => (
+      {componentes.map((c) => (
         <ComponenteCard
           key={c.id}
           componente={c}
@@ -408,11 +410,11 @@ export function RastreabilidadeSection({ ordemServicoId, isAdmin, isTecnico }: R
         />
       ))}
 
-      {dados.documentos_sem_componente.length > 0 && (
+      {documentosSemComponente.length > 0 && (
         <div className="rastreabilidade-componente-card">
           <strong className="rastreabilidade-componente-nome">Documentos gerais da OS</strong>
           <div className="rastreabilidade-documentos-lista">
-            {dados.documentos_sem_componente.map((doc) => (
+            {documentosSemComponente.map((doc) => (
               <DocumentoItem
                 key={doc.id}
                 doc={doc}
