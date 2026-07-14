@@ -78,6 +78,15 @@ export function useEntradaEstoque(id: string) {
   });
 }
 
+export function useAjusteEstoque(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { novoEstoque: number; observacao?: string }) =>
+      httpClient.post<MovimentacaoEstoque>(`/pecas/${id}/ajuste`, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pecas'] }),
+  });
+}
+
 export function useMovimentacoesPeca(id: string, filtros?: MovimentacoesFiltros) {
   return useQuery({
     queryKey: ['pecas', id, 'movimentacoes', filtros],

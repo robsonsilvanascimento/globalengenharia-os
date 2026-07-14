@@ -5,6 +5,7 @@ import {
   useCriarPeca,
   useAtualizarPeca,
   useEntradaEstoque,
+  useAjusteEstoque,
 } from '../hooks/useEstoque';
 import './EstoquePage.css';
 
@@ -58,10 +59,16 @@ export default function EstoquePage() {
   const [entradaQtd, setEntradaQtd] = useState('');
   const [entradaObs, setEntradaObs] = useState('');
 
+  const [modalAjusteAberto, setModalAjusteAberto] = useState(false);
+  const [pecaAjuste, setPecaAjuste] = useState<Peca | null>(null);
+  const [ajusteNovoEstoque, setAjusteNovoEstoque] = useState('');
+  const [ajusteObs, setAjusteObs] = useState('');
+
   const { data: pecas = [], isLoading, isError } = usePecas({ search: search || undefined, ativo: filtroAtivo });
   const criarPeca = useCriarPeca();
   const atualizarPeca = useAtualizarPeca(pecaEditando?.id ?? '');
   const entradaEstoque = useEntradaEstoque(pecaEntrada?.id ?? '');
+  const ajusteEstoque = useAjusteEstoque(pecaAjuste?.id ?? '');
 
   const alertas = pecas.filter((p) => p.estoqueAtual <= p.estoqueMinimo);
 
@@ -92,6 +99,28 @@ export default function EstoquePage() {
   function fecharModalEntrada() {
     setModalEntradaAberto(false);
     setPecaEntrada(null);
+  }
+
+  function abrirModalAjuste(p: Peca) {
+    setPecaAjuste(p);
+    setAjusteNovoEstoque(String(p.estoqueAtual));
+    setAjusteObs('');
+    setModalAjusteAberto(true);
+  }
+
+  function fecharModalAjuste() {
+    setModalAjusteAberto(false);
+    setPecaAjuste(null);
+  }
+
+  async function handleSalvarAjuste(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pecaAjuste) return;
+    await ajusteEstoque.mutateAsync({
+      novoEstoque: parseFloat(ajusteNovoEstoque),
+      observacao: ajusteObs || undefined,
+    });
+    fecharModalAjuste();
   }
 
   async function handleSalvarPeca(e: React.FormEvent) {
@@ -221,6 +250,13 @@ export default function EstoquePage() {
                             onClick={() => abrirModalEntrada(p)}
                           >
                             Entrada
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-sm btn-ajuste"
+                            onClick={() => abrirModalAjuste(p)}
+                          >
+                            Ajustar
                           </button>
                           <button
                             type="button"
@@ -400,6 +436,53 @@ export default function EstoquePage() {
                   disabled={entradaEstoque.isPending}
                 >
                   {entradaEstoque.isPending ? 'Registrando...' : 'Confirmar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {modalAjusteAberto && pecaAjuste && (
+        <div className="modal-overlay" onClick={fecharModalAjuste}>
+          <div className="modal-box modal-box-sm" onClick={(e) => e.stopPropagation()}>
+            <h2>Ajustar Estoque</h2>
+            <p className="modal-peca-nome">
+              {pecaAjuste.nome} <span className="alerta-codigo">{pecaAjuste.codigo}</span>
+            </p>
+            <p style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+              Estoque atual: <strong>{pecaAjuste.estoqueAtual}</strong>
+            </p>
+            <form onSubmit={handleSalvarAjuste} className="modal-form">
+              <label>
+                Novo valor do estoque
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1"
+                  value={ajusteNovoEstoque}
+                  onChange={(e) => setAjusteNovoEstoque(e.target.value)}
+                />
+              </label>
+              <label>
+                Motivo do ajuste
+                <textarea
+                  value={ajusteObs}
+                  onChange={(e) => setAjusteObs(e.target.value)}
+                  rows={2}
+                  placeholder="Ex: contagem física, perda, devolução..."
+                />
+              </label>
+              <div className="modal-acoes">
+                <button type="button" className="btn-secondary" onClick={fecharModalAjuste}>
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={ajusteEstoque.isPending}
+                >
+                  {ajusteEstoque.isPending ? 'Salvando...' : 'Confirmar Ajuste'}
                 </button>
               </div>
             </form>

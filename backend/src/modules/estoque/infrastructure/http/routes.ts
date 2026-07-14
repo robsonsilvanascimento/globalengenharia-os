@@ -51,6 +51,11 @@ const entradaBody = z.object({
   observacao: z.string().optional(),
 });
 
+const ajusteBody = z.object({
+  novoEstoque: z.number().min(0),
+  observacao: z.string().optional(),
+});
+
 const movimentacoesQuerySchema = z.object({
   tipo: z.enum(['entrada', 'saida']).optional(),
   page: z.coerce.number().int().positive().default(1),
@@ -209,6 +214,42 @@ export function registerEstoqueRoutes(app: FastifyInstance, { prisma }: EstoqueR
         },
       });
 
+      return mov;
+    });
+
+    return reply.status(201).send(movimentacao);
+  });
+
+  app.post('/pecas/:id/ajuste', somenteAdmin, async (request, reply) => {
+    const { id } = pecaIdParams.parse(request.params);
+    const body = ajusteBody.parse(request.body);
+
+    const existente = await prisma.peca.findUnique({ where: { id } });
+    if (!existente) throw new NotFoundError('Peca nao encontrada');
+
+    const estoqueAtual = Number(existente.estoqueAtual);
+    const diff = body.novoEstoque - estoqueAtual;
+    if (diff === 0) return reply.status(200).send({ message: 'Sem alteracao' });
+
+    const tipo = diff > 0 ? 'entrada' : 'saida';
+    const quantidade = Math.abs(diff);
+    const precoUnitario = Number(existente.precoUnitario);
+
+    const movimentacao = await prisma.$transaction(async (tx) => {
+      const mov = await tx.movimentacaoEstoque.create({
+        data: {
+          tipo,
+          quantidade,
+          precoUnitario,
+          observacao: body.observacao ?? `Ajuste manual: ${estoqueAtual} → ${body.novoEstoque}`,
+          pecaId: id,
+          criadoPorId: request.user!.id,
+        },
+      });
+      await tx.peca.update({
+        where: { id },
+        data: { estoqueAtual: body.novoEstoque },
+      });
       return mov;
     });
 
