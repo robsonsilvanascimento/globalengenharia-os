@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Badge } from '../../../components/ui/Badge';
 import { usePortalOSList, usePortalOSDetalhe } from '../hooks/usePortalOS';
 import { createPortalClient } from '../../../lib/api/portalClient';
-import type { PortalOS } from '../../../types/api';
+import type { PortalOS, HistoricoStatusOS, FotoEvidencia } from '../../../types/api';
 import './PortalClientePage.css';
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' });
@@ -81,7 +81,7 @@ function OSCard({ os, token }: OSCardProps) {
                 <div>
                   <p className="portal-section-title">Histórico de status</p>
                   <div className="portal-historico-list">
-                    {detalhe.historico_status.map(h => (
+                    {detalhe.historico_status.map((h: HistoricoStatusOS) => (
                       <div key={h.id} className="portal-historico-item">
                         <Badge variant="status" value={h.status_anterior} />
                         <span className="portal-historico-arrow">&#8594;</span>
@@ -98,7 +98,7 @@ function OSCard({ os, token }: OSCardProps) {
                 <div>
                   <p className="portal-section-title">Fotos do serviço</p>
                   <div className="portal-fotos-grid">
-                    {detalhe.fotos_servico.map(foto => (
+                    {detalhe.fotos_servico.map((foto: FotoEvidencia) => (
                       <div key={foto.id} className="portal-foto-item">
                         <img
                           src={`data:${foto.mime_type};base64,${foto.base64}`}
@@ -161,7 +161,7 @@ export function PortalClientePage() {
 
         {data && data.length > 0 && (
           <div className="portal-os-list">
-            {data.map(os => (
+            {data.map((os: PortalOS) => (
               <OSCard key={os.id} os={os} token={token} />
             ))}
           </div>
