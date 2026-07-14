@@ -122,8 +122,8 @@ export function ConsumoPecasSection({ osId }: ConsumoPecasSectionProps) {
                     <td style={{ padding: '0.5rem' }}>{c.peca?.codigo ?? '—'}</td>
                     <td style={{ padding: '0.5rem' }}>{c.peca?.nome ?? '—'}</td>
                     <td style={{ padding: '0.5rem' }}>{c.quantidade}</td>
-                    <td style={{ padding: '0.5rem' }}>{currencyFormatter.format(c.precoUnitario)}</td>
-                    <td style={{ padding: '0.5rem' }}>{currencyFormatter.format(c.subtotal)}</td>
+                    <td style={{ padding: '0.5rem' }}>{currencyFormatter.format(Number(c.precoUnitario))}</td>
+                    <td style={{ padding: '0.5rem' }}>{currencyFormatter.format(Number(c.subtotal))}</td>
                     {isAdmin && (
                       <td style={{ padding: '0.5rem' }}>
                         <button
@@ -143,7 +143,7 @@ export function ConsumoPecasSection({ osId }: ConsumoPecasSectionProps) {
           )}
 
           <p style={{ textAlign: 'right', fontWeight: 700, marginTop: '0.75rem' }}>
-            Total em peças: {currencyFormatter.format(consumoQuery.data.custo_total)}
+            Total em peças: {currencyFormatter.format(Number(consumoQuery.data.custo_total))}
           </p>
         </>
       )}
