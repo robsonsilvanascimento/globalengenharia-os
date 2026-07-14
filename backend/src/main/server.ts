@@ -116,7 +116,7 @@ async function buildServer() {
   });
 
   registerPendenciasRoutes(app, {
-    pendenciaOSRepository: container.pendencias.pendenciaOSRepository,
+    pendenciaRepository: container.pendencias.pendenciaOSRepository,
     ordemServicoRepository: container.ordensServico.ordemServicoRepository,
   });
   registerChecklistRoutes(app, {
@@ -151,10 +151,13 @@ async function buildServer() {
   // O EventBus e in-process: o listener precisa ser registrado no mesmo
   // processo que publica o evento OSStatusAlterado (use cases de
   // ordens-servico, acionados via HTTP acima).
-  registerPortalClienteRoutes(app, { prisma });
+  registerPortalClienteRoutes(app, {
+    prisma,
+    armazenamentoArquivoService: container.midias.armazenamentoArquivoService,
+  });
   registerNpsRoutes(app, { prisma, redis: redisConnection });
   registerWebhookMercadoPagoRoutes(app, { prisma });
-  registerPagamentoRoutes(app, { prisma });
+  registerPagamentoRoutes(app);
   registerFinanceiroRoutes(app, { prisma });
   await agendarAlertaInadimplencia(alertaInadimplenciaQueue);
   registerEstoqueRoutes(app, { prisma });

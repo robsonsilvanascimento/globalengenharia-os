@@ -16,7 +16,7 @@ export async function GerarPixUseCase(
     include: { cliente: { select: { nome: true, email: true } } },
   });
 
-  const valorCobrado = os.valor_cobrado ? Number(os.valor_cobrado) : 0;
+  const valorCobrado = os.valorCobrado ? Number(os.valorCobrado) : 0;
 
   if (!valorCobrado) {
     throw new ValidationError('OS sem valor cobrado definido');
