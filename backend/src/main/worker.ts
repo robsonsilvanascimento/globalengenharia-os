@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { logger } from '../shared/infra/Logger';
 import { eventBus } from '../shared/domain/EventBus';
+import { prisma } from '../shared/infra/PrismaClient';
 import { enqueueEntregaPdfOS } from '../shared/infra/queues';
 import { PrismaClienteRepository } from '../modules/clientes/infrastructure/PrismaClienteRepository';
 import { PrismaCategoriaServicoRepository } from '../modules/categorias-servico/infrastructure/PrismaCategoriaServicoRepository';
@@ -19,6 +20,8 @@ import { registrarEntregarPdfOSListener } from '../modules/entrega-documentos/ap
 import { PrismaConversaWhatsappRepository } from '../modules/whatsapp/infrastructure/PrismaConversaWhatsappRepository';
 import { PrismaMensagemWhatsappRepository } from '../modules/whatsapp/infrastructure/PrismaMensagemWhatsappRepository';
 import { ConsultarStatusOSViaWhatsappUseCase } from '../modules/whatsapp/application/ConsultarStatusOSViaWhatsappUseCase';
+import { ConsultarPagamentoViaWhatsappUseCase } from '../modules/whatsapp/application/ConsultarPagamentoViaWhatsappUseCase';
+import { buscarPagamentoDaOS } from '../modules/pagamento/application/BuscarPagamentoDaOSUseCase';
 import { ProcessarMensagemWhatsappUseCase } from '../modules/whatsapp/application/ProcessarMensagemWhatsappUseCase';
 import { createWhatsappConversaWorker } from '../modules/whatsapp/infrastructure/queues/whatsapp-conversa-worker';
 import { PrismaFaqEntryRepository } from '../modules/faq/infrastructure/PrismaFaqEntryRepository';
@@ -28,6 +31,8 @@ import { CriarSolicitacaoAtendimentoUseCase } from '../modules/atendimento-human
 import { PrismaMidiaOrdemServicoRepository } from '../modules/midias/infrastructure/PrismaMidiaOrdemServicoRepository';
 import { CriarMidiaOrdemServicoUseCase } from '../modules/midias/application/CriarMidiaOrdemServicoUseCase';
 import { ArmazenamentoLocalService } from '../shared/infra/storage/ArmazenamentoLocalService';
+import { createComissaoWorker } from '../modules/pagamento/infrastructure/queues/comissao-worker';
+import { createPixWhatsappWorker } from '../modules/pagamento/infrastructure/queues/pix-whatsapp-worker';
 
 /**
  * Processo separado, dedicado a consumir as filas do BullMQ (ex.: envio de
@@ -80,6 +85,28 @@ function start(): void {
     logger.error({ jobId: job?.id, err }, 'Job da fila notificacao-tecnico falhou');
   });
 
+  const comissaoWorker = createComissaoWorker();
+
+  comissaoWorker.on('completed', (job) => {
+    logger.info({ jobId: job.id }, 'Job da fila calcular-comissao concluido');
+  });
+
+  comissaoWorker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'Job da fila calcular-comissao falhou');
+  });
+
+  const pixWhatsappWorker = createPixWhatsappWorker({
+    notificacaoEnviadaRepository: new PrismaNotificacaoEnviadaRepository(),
+  });
+
+  pixWhatsappWorker.on('completed', (job) => {
+    logger.info({ jobId: job.id }, 'Job da fila pix-whatsapp concluido');
+  });
+
+  pixWhatsappWorker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'Job da fila pix-whatsapp falhou');
+  });
+
   // O EventBus e in-process (EventEmitter): cada processo Node tem sua propria
   // instancia do singleton `eventBus`. Por isso o listener de OSCriada precisa
   // ser registrado tambem AQUI (alem do processo HTTP em server.ts), para que
@@ -103,6 +130,12 @@ function start(): void {
     listarOrdensServicoUseCase,
   });
 
+  const consultarPagamentoViaWhatsappUseCase = new ConsultarPagamentoViaWhatsappUseCase({
+    ordemServicoRepository: new PrismaOrdemServicoRepository(),
+    listarOrdensServicoUseCase,
+    buscarPagamentoDaOS: (ordemServico) => buscarPagamentoDaOS(ordemServico, prisma),
+  });
+
   const buscarRespostaFaqUseCase = new BuscarRespostaFaqUseCase({
     faqEntryRepository: new PrismaFaqEntryRepository(),
   });
@@ -123,6 +156,7 @@ function start(): void {
     verificarDisponibilidadeUseCase,
     usuarioRepository: new PrismaUsuarioRepository(),
     consultarStatusOSViaWhatsappUseCase,
+    consultarPagamentoViaWhatsappUseCase,
     buscarRespostaFaqUseCase,
     criarSolicitacaoAtendimentoUseCase,
   });
@@ -140,7 +174,9 @@ function start(): void {
     criarMidiaOrdemServicoUseCase,
   });
 
-  logger.info('Worker de filas iniciado (notificacoes-whatsapp, whatsapp-conversa, entrega-pdf-os, notificacao-tecnico)');
+  logger.info(
+    'Worker de filas iniciado (notificacoes-whatsapp, whatsapp-conversa, entrega-pdf-os, notificacao-tecnico, calcular-comissao, pix-whatsapp)',
+  );
 }
 
 start();

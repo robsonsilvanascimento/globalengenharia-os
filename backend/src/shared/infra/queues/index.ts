@@ -7,6 +7,7 @@ export const QUEUE_NAMES = {
   ENTREGA_PDF_OS: 'entrega-pdf-os',
   NOTIFICACAO_TECNICO: 'notificacao-tecnico',
   CALCULAR_COMISSAO: 'calcular-comissao',
+  PIX_WHATSAPP: 'pix-whatsapp',
 } as const;
 
 export interface WhatsappConversaJobData {
@@ -156,4 +157,24 @@ export const calcularComissaoQueue = new Queue<CalcularComissaoJobData>(
 
 export async function enqueueCalcularComissao(data: CalcularComissaoJobData): Promise<void> {
   await calcularComissaoQueue.add('calcular-comissao', data);
+}
+
+export interface PixWhatsappJobData {
+  ordemServicoId: string;
+}
+
+/**
+ * Fila responsavel por gerar o Pix (Mercado Pago) de uma OS concluida e
+ * enviar o codigo ao cliente via WhatsApp.
+ */
+export const pixWhatsappQueue = new Queue<PixWhatsappJobData>(
+  QUEUE_NAMES.PIX_WHATSAPP,
+  {
+    connection: redisConnection,
+    defaultJobOptions,
+  },
+);
+
+export async function enqueuePixWhatsapp(data: PixWhatsappJobData): Promise<void> {
+  await pixWhatsappQueue.add('gerar-pix-whatsapp', data);
 }
