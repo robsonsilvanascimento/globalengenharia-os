@@ -39,7 +39,12 @@ import { registrarNotificarTecnicoAtribuidoListener } from '../modules/notificac
 import { GoogleCalendarService } from '../modules/google-calendar/infrastructure/GoogleCalendarService';
 import { registrarSincronizarCalendarioListener } from '../modules/google-calendar/application/SincronizarCalendarioListener';
 import { registrarEntregarPdfOSListener } from '../modules/entrega-documentos/application/EntregarPdfOSListener';
-import { enqueueNotificacaoWhatsapp, enqueueEntregaPdfOS, enqueueNotificacaoTecnico } from '../shared/infra/queues';
+import {
+  enqueueNotificacaoWhatsapp,
+  enqueueEntregaPdfOS,
+  enqueueNotificacaoTecnico,
+  enqueuePixWhatsapp,
+} from '../shared/infra/queues';
 import { enqueueExpoPush } from '../modules/notificacoes/infrastructure/queues/expo-push-queue';
 import { registerPortalClienteRoutes } from '../modules/portal-cliente/infrastructure/http/routes';
 import { registerNpsRoutes } from '../modules/nps/infrastructure/http/routes';
@@ -48,7 +53,7 @@ import '../modules/nps/infrastructure/queues/nps-worker';
 import { registrarEnfileirarNpsListener } from '../modules/nps/application/EnfileirarNpsListener';
 import { registerWebhookMercadoPagoRoutes } from '../modules/pagamento/infrastructure/http/webhook-routes';
 import { registerPagamentoRoutes } from '../modules/pagamento/infrastructure/http/routes';
-import '../modules/pagamento/infrastructure/queues/comissao-worker';
+import { registrarGerarPixAoConcluirOSListener } from '../modules/pagamento/application/GerarPixAoConcluirOSListener';
 import { registerFinanceiroRoutes } from '../modules/financeiro/infrastructure/http/routes';
 import { alertaInadimplenciaQueue, agendarAlertaInadimplencia } from '../modules/financeiro/infrastructure/queues/inadimplencia-worker';
 import { registerEstoqueRoutes } from '../modules/estoque/infrastructure/http/routes';
@@ -169,6 +174,9 @@ async function buildServer() {
   registerRelatoriosExcelRoutes(app, { prisma });
 
   registrarNotificarMudancaStatusListener(container.eventBus, enqueueNotificacaoWhatsapp);
+
+  // OS concluida via painel (rota HTTP acima): dispara geracao/envio de Pix.
+  registrarGerarPixAoConcluirOSListener(container.eventBus, enqueuePixWhatsapp);
 
   registrarEnfileirarNpsListener(container.eventBus, enqueueNpsPesquisa);
 

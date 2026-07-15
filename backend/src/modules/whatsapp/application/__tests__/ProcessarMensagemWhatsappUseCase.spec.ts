@@ -12,6 +12,10 @@ import { BuscarRespostaFaqUseCase, type ChamarModeloFn } from '../../../faq/appl
 import { CriarSolicitacaoAtendimentoUseCase } from '../../../atendimento-humano/application/CriarSolicitacaoAtendimentoUseCase';
 import { FakeSolicitacaoAtendimentoRepository } from '../../../atendimento-humano/application/__tests__/fakes';
 import { ConsultarStatusOSViaWhatsappUseCase } from '../ConsultarStatusOSViaWhatsappUseCase';
+import {
+  ConsultarPagamentoViaWhatsappUseCase,
+  type BuscarPagamentoDaOSFn,
+} from '../ConsultarPagamentoViaWhatsappUseCase';
 import { ProcessarMensagemWhatsappUseCase } from '../ProcessarMensagemWhatsappUseCase';
 import {
   criarCategoriaServicoFake,
@@ -24,7 +28,9 @@ import {
   FakeUsuarioRepository,
 } from './fakes';
 
-function montarUseCase(opts: { chamarModeloFaq?: ChamarModeloFn } = {}) {
+function montarUseCase(
+  opts: { chamarModeloFaq?: ChamarModeloFn; buscarPagamentoDaOS?: BuscarPagamentoDaOSFn } = {},
+) {
   const clienteRepository = new FakeClienteRepository();
   const conversaWhatsappRepository = new FakeConversaWhatsappRepository();
   const categoriaServicoRepository = new FakeCategoriaServicoRepository([
@@ -45,6 +51,11 @@ function montarUseCase(opts: { chamarModeloFaq?: ChamarModeloFn } = {}) {
   const consultarStatusOSViaWhatsappUseCase = new ConsultarStatusOSViaWhatsappUseCase({
     ordemServicoRepository,
     listarOrdensServicoUseCase,
+  });
+  const consultarPagamentoViaWhatsappUseCase = new ConsultarPagamentoViaWhatsappUseCase({
+    ordemServicoRepository,
+    listarOrdensServicoUseCase,
+    buscarPagamentoDaOS: opts.buscarPagamentoDaOS ?? (async () => ({ statusPagamento: 'sem_valor' })),
   });
 
   const faqEntryRepository = new FakeFaqEntryRepository([criarFaqEntryFake()]);
@@ -69,6 +80,7 @@ function montarUseCase(opts: { chamarModeloFaq?: ChamarModeloFn } = {}) {
     verificarDisponibilidadeUseCase,
     usuarioRepository,
     consultarStatusOSViaWhatsappUseCase,
+    consultarPagamentoViaWhatsappUseCase,
     buscarRespostaFaqUseCase,
     criarSolicitacaoAtendimentoUseCase,
   });
@@ -254,6 +266,26 @@ describe('ProcessarMensagemWhatsappUseCase', () => {
       const texto = mensagem.tipo === 'texto' ? mensagem.mensagem : '';
       expect(texto).toContain('OS-2026-000001');
       expect(texto).toContain('OS-2026-000002');
+    });
+
+    it('encaminha mensagem sobre pagamento para a consulta de pagamento (nao para consulta de status)', async () => {
+      const buscarPagamentoDaOS = vi.fn(async () => ({
+        statusPagamento: 'pendente' as const,
+        valor: 150,
+        pixCopiaECola: 'codigo-pix-fake',
+      }));
+      const { useCase, clienteRepository, ordemServicoRepository } = montarUseCase({ buscarPagamentoDaOS });
+      const cliente = await clienteRepository.create({ nome: 'Maria Cliente', telefoneWhatsapp: TELEFONE });
+      ordemServicoRepository.seed(
+        criarOrdemServicoFake({ id: 'os-1', numero: 'OS-2026-000001', clienteId: cliente.id, status: 'concluida' }),
+      );
+
+      const resultado = await useCase.execute({ telefone: TELEFONE, mensagemRecebida: 'ja paguei?' });
+
+      const mensagem = resultado.respostasParaEnviar[0];
+      const texto = mensagem.tipo === 'texto' ? mensagem.mensagem : '';
+      expect(texto).toContain('codigo-pix-fake');
+      expect(buscarPagamentoDaOS).toHaveBeenCalledTimes(1);
     });
 
     it('nao interrompe o fluxo de abertura em andamento com uma mensagem ambigua (parecida com consulta)', async () => {

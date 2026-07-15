@@ -7,9 +7,11 @@ import type { UsuarioRepository } from '../../auth/domain/UsuarioRepository';
 import type { BuscarRespostaFaqUseCase } from '../../faq/application/BuscarRespostaFaqUseCase';
 import type { CriarSolicitacaoAtendimentoUseCase } from '../../atendimento-humano/application/CriarSolicitacaoAtendimentoUseCase';
 import type { ConsultarStatusOSViaWhatsappUseCase } from './ConsultarStatusOSViaWhatsappUseCase';
+import type { ConsultarPagamentoViaWhatsappUseCase } from './ConsultarPagamentoViaWhatsappUseCase';
 import type { ConversaWhatsapp } from '../domain/ConversaWhatsapp';
 import type { ConversaWhatsappRepository } from '../domain/ConversaWhatsappRepository';
 import { detectarIntencaoConsulta } from '../domain/DetectarIntencaoConsulta';
+import { detectarIntencaoPagamento } from '../domain/DetectarIntencaoPagamento';
 import { detectarPerguntaGeral } from '../domain/DetectarPerguntaGeral';
 import {
   processarFluxoConversa,
@@ -26,6 +28,7 @@ export interface ProcessarMensagemWhatsappDeps {
   verificarDisponibilidadeUseCase: VerificarDisponibilidadeUseCase;
   usuarioRepository: UsuarioRepository;
   consultarStatusOSViaWhatsappUseCase: ConsultarStatusOSViaWhatsappUseCase;
+  consultarPagamentoViaWhatsappUseCase: ConsultarPagamentoViaWhatsappUseCase;
   buscarRespostaFaqUseCase: BuscarRespostaFaqUseCase;
   criarSolicitacaoAtendimentoUseCase: CriarSolicitacaoAtendimentoUseCase;
 }
@@ -104,6 +107,17 @@ export class ProcessarMensagemWhatsappUseCase {
     // passam por aqui, pois so recriamos/mantemos `conversa.estadoFluxo`
     // como 'inicio' nesses dois casos.
     if (conversa.estadoFluxo === 'inicio') {
+      const intencaoPagamento = detectarIntencaoPagamento(mensagemRecebida);
+
+      if (intencaoPagamento) {
+        const respostasParaEnviar = await this.deps.consultarPagamentoViaWhatsappUseCase.execute({
+          clienteId: cliente.id,
+          intencao: intencaoPagamento,
+        });
+
+        return { conversa, respostasParaEnviar };
+      }
+
       const intencaoConsulta = detectarIntencaoConsulta(mensagemRecebida);
 
       if (intencaoConsulta) {
