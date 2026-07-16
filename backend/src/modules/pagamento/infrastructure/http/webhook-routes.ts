@@ -92,6 +92,17 @@ export function registerWebhookMercadoPagoRoutes(
       return reply.status(200).send({ ok: true });
     }
 
+    const valorPago = Number(result.transaction_amount ?? 0);
+    const diferenca = Math.abs(valorPago - pagamentoOS.valor);
+
+    if (diferenca > 0.01) {
+      logger.error(
+        { pagamentoOSId: pagamentoOS.id, valorEsperado: pagamentoOS.valor, valorPago },
+        'Valor pago no Mercado Pago diverge do valor cobrado - pagamento NAO confirmado automaticamente, requer revisao manual',
+      );
+      return reply.status(200).send({ ok: true });
+    }
+
     await prisma.pagamentoOS.update({
       where: { id: pagamentoOS.id },
       data: { statusPagamento: 'pago', pagoEm: new Date() },

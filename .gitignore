@@ -43,6 +43,9 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Configuracoes pessoais do Claude Code (nao compartilhadas com o time)
+.claude/settings.local.json
+
 # Docker volumes locais (se mapeados em ./data)
 data/
 postgres_data/
