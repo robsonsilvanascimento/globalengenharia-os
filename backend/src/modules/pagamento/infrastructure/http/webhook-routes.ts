@@ -4,6 +4,7 @@ import { Payment } from 'mercadopago';
 import type { PrismaClient } from '@prisma/client';
 import { mercadoPagoClient } from '../mercadopago/MercadoPagoService';
 import { enqueueCalcularComissao } from '../queues/comissao-queue';
+import { enqueueEntregaRecibo } from '../../../../shared/infra/queues';
 import { logger } from '../../../../shared/infra/Logger';
 
 interface WebhookBody {
@@ -114,6 +115,7 @@ export function registerWebhookMercadoPagoRoutes(
     });
 
     await enqueueCalcularComissao({ pagamentoOSId: pagamentoOS.id });
+    await enqueueEntregaRecibo({ pagamentoOSId: pagamentoOS.id });
 
     return reply.status(200).send({ ok: true });
   });

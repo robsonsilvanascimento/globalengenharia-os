@@ -1,5 +1,5 @@
 import { prisma } from '../../../shared/infra/PrismaClient';
-import { enqueueCalcularComissao } from '../../../shared/infra/queues';
+import { enqueueCalcularComissao, enqueueEntregaRecibo } from '../../../shared/infra/queues';
 import { BadRequestError } from '../../../shared/http/errors/AppError';
 
 export interface RegistrarPagamentoManualInput {
@@ -34,6 +34,7 @@ export async function registrarPagamentoManual(input: RegistrarPagamentoManualIn
   });
 
   await enqueueCalcularComissao({ pagamentoOSId: pagamento.id });
+  await enqueueEntregaRecibo({ pagamentoOSId: pagamento.id });
 
   return pagamento;
 }

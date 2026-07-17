@@ -8,6 +8,7 @@ export const QUEUE_NAMES = {
   NOTIFICACAO_TECNICO: 'notificacao-tecnico',
   CALCULAR_COMISSAO: 'calcular-comissao',
   PIX_WHATSAPP: 'pix-whatsapp',
+  ENTREGA_RECIBO: 'entrega-recibo',
 } as const;
 
 export interface WhatsappConversaJobData {
@@ -177,4 +178,25 @@ export const pixWhatsappQueue = new Queue<PixWhatsappJobData>(
 
 export async function enqueuePixWhatsapp(data: PixWhatsappJobData): Promise<void> {
   await pixWhatsappQueue.add('gerar-pix-whatsapp', data);
+}
+
+export interface EntregaReciboJobData {
+  pagamentoOSId: string;
+}
+
+/**
+ * Fila responsavel por gerar o PDF do recibo de pagamento e entrega-lo ao
+ * cliente via WhatsApp assim que um pagamento e confirmado (Pix automatico
+ * ou manual).
+ */
+export const entregaReciboQueue = new Queue<EntregaReciboJobData>(
+  QUEUE_NAMES.ENTREGA_RECIBO,
+  {
+    connection: redisConnection,
+    defaultJobOptions,
+  },
+);
+
+export async function enqueueEntregaRecibo(data: EntregaReciboJobData): Promise<void> {
+  await entregaReciboQueue.add('entregar-recibo', data);
 }
