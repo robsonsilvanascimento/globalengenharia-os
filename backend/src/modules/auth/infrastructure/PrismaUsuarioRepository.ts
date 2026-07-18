@@ -27,7 +27,11 @@ export class PrismaUsuarioRepository implements UsuarioRepository {
   constructor(private readonly client: PrismaClient = prisma) {}
 
   async findByEmail(email: string): Promise<Usuario | null> {
-    const registro = await this.client.usuario.findUnique({ where: { email } });
+    // Normaliza para minusculas: sem isso, "User@x.com" e "user@x.com" sao
+    // tratados como e-mails diferentes (unique constraint do Postgres e
+    // case-sensitive por padrao), permitindo cadastros duplicados do mesmo
+    // e-mail real e login inconsistente dependendo da capitalizacao digitada.
+    const registro = await this.client.usuario.findUnique({ where: { email: email.toLowerCase() } });
     return registro ? paraEntidade(registro) : null;
   }
 
@@ -40,7 +44,7 @@ export class PrismaUsuarioRepository implements UsuarioRepository {
     const registro = await this.client.usuario.create({
       data: {
         nome: dados.nome,
-        email: dados.email,
+        email: dados.email.toLowerCase(),
         senhaHash: dados.senhaHash,
         papel: dados.papel,
         ativo: dados.ativo ?? true,
@@ -59,7 +63,7 @@ export class PrismaUsuarioRepository implements UsuarioRepository {
   async update(id: string, dados: AtualizarUsuarioDados): Promise<Usuario> {
     const registro = await this.client.usuario.update({
       where: { id },
-      data: dados,
+      data: { ...dados, email: dados.email?.toLowerCase() },
     });
     return paraEntidade(registro);
   }

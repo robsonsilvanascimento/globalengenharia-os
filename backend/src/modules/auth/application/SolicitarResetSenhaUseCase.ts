@@ -4,6 +4,26 @@ import { enviarEmailComAnexo } from '../../../shared/infra/email/EmailService';
 
 const UMA_HORA_EM_MS = 60 * 60 * 1000;
 
+/**
+ * Em producao, `FRONTEND_URL` ausente falha alto em vez de cair
+ * silenciosamente para localhost: sem essa checagem, um deploy com a env
+ * var esquecida enviaria e-mails de reset de senha reais com um link
+ * quebrado (localhost, inacessivel para o cliente) sem nenhum aviso.
+ */
+function obterFrontendUrl(): string {
+  const frontendUrl = process.env.FRONTEND_URL;
+
+  if (frontendUrl) {
+    return frontendUrl;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FRONTEND_URL precisa estar definida no ambiente de producao');
+  }
+
+  return 'http://localhost:5173';
+}
+
 export interface SolicitarResetSenhaUseCaseInput {
   email: string;
 }
@@ -39,8 +59,7 @@ export class SolicitarResetSenhaUseCase {
 
     await usuarioRepository.salvarTokenReset(usuario.id, tokenHash, expiraEm);
 
-    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173';
-    const link = `${frontendUrl}/redefinir-senha?token=${token}`;
+    const link = `${obterFrontendUrl()}/redefinir-senha?token=${token}`;
 
     await enviarEmail(
       usuario.email,

@@ -16,21 +16,29 @@ export async function registrarPagamentoManual(input: RegistrarPagamentoManualIn
     throw new BadRequestError('O valor do pagamento deve ser maior que zero');
   }
 
-  const pagamento = await prisma.pagamentoOS.create({
-    data: {
-      ordemServicoId,
-      tipo: 'manual',
-      statusPagamento: 'pago',
-      pagoEm: new Date(),
-      valor,
-      observacao,
-      criadoPorId,
-    },
-  });
+  // Cria o pagamento e fecha a OS como paga na mesma transacao: sem isso, um
+  // crash/erro entre as duas escritas deixaria o PagamentoOS marcado como
+  // pago mas a OS ainda "pendente" (ou vice-versa), um estado inconsistente
+  // que so seria notado manualmente.
+  const pagamento = await prisma.$transaction(async (tx) => {
+    const pagamentoCriado = await tx.pagamentoOS.create({
+      data: {
+        ordemServicoId,
+        tipo: 'manual',
+        statusPagamento: 'pago',
+        pagoEm: new Date(),
+        valor,
+        observacao,
+        criadoPorId,
+      },
+    });
 
-  await prisma.ordemServico.update({
-    where: { id: ordemServicoId },
-    data: { statusPagamento: 'pago' },
+    await tx.ordemServico.update({
+      where: { id: ordemServicoId },
+      data: { statusPagamento: 'pago' },
+    });
+
+    return pagamentoCriado;
   });
 
   await enqueueCalcularComissao({ pagamentoOSId: pagamento.id });
