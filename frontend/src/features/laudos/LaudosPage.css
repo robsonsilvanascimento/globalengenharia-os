@@ -1,0 +1,287 @@
+.laudos-page {
+  padding: 1.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.laudos-head h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  color: #1e2733;
+}
+.laudos-head p {
+  margin: 0 0 1.25rem;
+  color: #55616f;
+  font-size: 0.9rem;
+  max-width: 70ch;
+}
+
+.laudos-grid {
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* Editor */
+.laudos-editor {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e2e6ec;
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 520px;
+}
+.laudos-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #e2e6ec;
+  background: #f7f9fc;
+}
+.laudos-editor-titulo {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #34568b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.laudos-editor-acoes {
+  display: flex;
+  gap: 0.5rem;
+}
+.laudos-textarea {
+  flex: 1;
+  border: none;
+  resize: vertical;
+  padding: 1rem 1.1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #1e2733;
+  min-height: 440px;
+}
+.laudos-textarea:focus {
+  outline: none;
+}
+.laudos-editor-rodape {
+  padding: 0.4rem 0.9rem;
+  border-top: 1px solid #e2e6ec;
+  font-size: 0.75rem;
+  color: #8a94a2;
+  text-align: right;
+}
+
+/* Biblioteca */
+.laudos-biblioteca {
+  background: #fff;
+  border: 1px solid #e2e6ec;
+  border-radius: 12px;
+  padding: 1rem;
+  max-height: 78vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 1rem;
+}
+.laudos-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+.laudos-filtros select,
+.laudos-filtros input {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d3dae6;
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+.laudos-info {
+  color: #8a94a2;
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+}
+.laudos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.laudos-trecho {
+  border: 1px solid #e9edf3;
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  background: #fbfcfe;
+}
+.laudos-trecho-cab {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.laudos-trecho-assunto {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #1e2733;
+}
+.laudos-trecho-norma {
+  font-size: 0.72rem;
+  color: #34568b;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.laudos-badge-verificar {
+  display: inline-block;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #a9700a;
+  background: #fbefd6;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-bottom: 0.35rem;
+}
+.laudos-trecho-texto {
+  margin: 0.2rem 0 0.55rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #46536a;
+}
+.laudos-trecho-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Botoes */
+.btn-inserir {
+  background: #34568b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-inserir:hover {
+  background: #24406c;
+}
+.btn-primario {
+  background: #0b5fff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primario:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.btn-secundario {
+  background: #eef2f8;
+  color: #46536a;
+  border: 1px solid #d3dae6;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.btn-secundario:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.btn-link {
+  background: none;
+  border: none;
+  color: #34568b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.btn-link-perigo {
+  color: #c0392b;
+}
+
+/* Modal */
+.laudos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 24, 38, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+.laudos-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.4rem;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.laudos-modal h2 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+}
+.laudos-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #46536a;
+  margin-bottom: 0.8rem;
+}
+.laudos-modal input,
+.laudos-modal select,
+.laudos-modal textarea {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #d3dae6;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  font-weight: 400;
+}
+.laudos-modal-linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+.laudos-check {
+  flex-direction: row !important;
+  align-items: center;
+  font-weight: 400 !important;
+  font-size: 0.8rem !important;
+}
+.laudos-check input {
+  width: auto;
+}
+.laudos-modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 920px) {
+  .laudos-grid {
+    grid-template-columns: 1fr;
+  }
+  .laudos-biblioteca {
+    position: static;
+    max-height: none;
+  }
+}

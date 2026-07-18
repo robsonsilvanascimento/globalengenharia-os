@@ -9,6 +9,9 @@ interface NavItem {
 
 const COMMON_ITEMS: NavItem[] = [{ label: 'Ordens de Serviço', to: '/' }];
 
+// Montagem de laudos: disponivel para a equipe tecnica (admin e tecnico).
+const LAUDO_ITEMS: NavItem[] = [{ label: 'Laudos Técnicos', to: '/laudos' }];
+
 const ADMIN_ITEMS: NavItem[] = [
   { label: 'Usuários', to: '/usuarios' },
   { label: 'Categorias de Serviço', to: '/categorias-servico' },
@@ -33,6 +36,7 @@ export function Sidebar() {
   const { papel } = useAuth();
   const items = [
     ...COMMON_ITEMS,
+    ...(papel === 'admin' || papel === 'tecnico' ? LAUDO_ITEMS : []),
     ...(papel === 'atendente' || papel === 'admin' ? ATENDENTE_ITEMS : []),
     ...(papel === 'admin' ? ADMIN_ITEMS : []),
   ];

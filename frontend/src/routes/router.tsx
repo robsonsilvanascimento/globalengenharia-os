@@ -33,6 +33,7 @@ import { FaqPage } from '../features/faq/FaqPage';
 import { AtendimentoHumanoPage } from '../features/atendimento-humano/AtendimentoHumanoPage';
 import { ClientesPage } from '../features/clientes/ClientesPage';
 import { ClienteDetailPage } from '../features/clientes/ClienteDetailPage';
+import { LaudosPage } from '../features/laudos/LaudosPage';
 import AnalyticsDashboardPage from '../features/analytics/pages/AnalyticsDashboardPage';
 import { lazy, Suspense } from 'react';
 import SlaConfigPage from '../features/sla/pages/SlaConfigPage';
@@ -124,6 +125,15 @@ export function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['atendente', 'admin']}>
               <AtendimentoHumanoPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/laudos"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'tecnico']}>
+              <LaudosPage />
             </ProtectedRoute>
           }
         />
