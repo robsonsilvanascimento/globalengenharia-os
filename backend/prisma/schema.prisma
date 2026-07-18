@@ -229,6 +229,7 @@ model OrdemServico {
   midiasOrdemServico MidiaOrdemServico[]
   estimativaCusto    EstimativaCustoOS?
   orcamento          OrcamentoOS?
+  laudos             Laudo[]
   componentesInstalados ComponenteInstalado[]
   documentos         DocumentoOS[]
   pendencias         PendenciaOS[]
@@ -332,6 +333,31 @@ model TrechoNormativo {
   @@index([categoria])
   @@index([norma])
   @@map("trechos_normativos")
+}
+
+// Laudo tecnico emitido. Guarda o conteudo montado no editor, o responsavel
+// tecnico e o numero da ART (registrada no CREA pelo engenheiro), servindo de
+// historico e permitindo regenerar o PDF. Pode ou nao estar vinculado a uma OS.
+model Laudo {
+  id              String   @id @default(uuid())
+  numero          String   @unique
+  ordemServicoId  String?  @map("ordem_servico_id")
+  titulo          String
+  tipo            String
+  clienteNome     String?  @map("cliente_nome")
+  conteudo        String   @db.Text
+  responsavelNome String?  @map("responsavel_nome")
+  responsavelCrea String?  @map("responsavel_crea")
+  artNumero       String?  @map("art_numero")
+  emitidoEm       DateTime @default(now()) @map("emitido_em")
+  criadoPorId     String?  @map("criado_por_id")
+  criadoEm        DateTime @default(now()) @map("criado_em")
+  atualizadoEm    DateTime @updatedAt @map("atualizado_em")
+
+  ordemServico OrdemServico? @relation(fields: [ordemServicoId], references: [id])
+
+  @@index([ordemServicoId])
+  @@map("laudos")
 }
 
 model HistoricoStatusOS {

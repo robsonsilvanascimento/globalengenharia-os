@@ -79,3 +79,42 @@ export function useRemoverTrecho() {
     onSuccess: () => qc.invalidateQueries({ queryKey: TRECHOS_KEY }),
   });
 }
+
+export interface Laudo {
+  id: string;
+  numero: string;
+  titulo: string;
+  tipo: string;
+  clienteNome: string | null;
+  conteudo: string;
+  responsavelNome: string | null;
+  responsavelCrea: string | null;
+  artNumero: string | null;
+  emitidoEm: string;
+}
+
+export interface SalvarLaudoInput {
+  id?: string;
+  ordem_servico_id?: string | null;
+  titulo: string;
+  tipo: string;
+  cliente_nome?: string | null;
+  conteudo: string;
+  responsavel_nome?: string | null;
+  responsavel_crea?: string | null;
+  art_numero?: string | null;
+}
+
+export function useSalvarLaudo() {
+  return useMutation({
+    mutationFn: (body: SalvarLaudoInput) => httpClient.post<Laudo>('/laudos', body),
+  });
+}
+
+/** Baixa/abre o PDF do laudo (com auth). Retorna a URL de blob para abrir em nova aba. */
+export async function abrirLaudoPdf(id: string): Promise<void> {
+  const blob = await httpClient.getBlob(`/laudos/${id}/pdf`);
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}

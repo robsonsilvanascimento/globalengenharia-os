@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import {
+  abrirLaudoPdf,
   useAtualizarTrecho,
   useCategoriasTrecho,
   useCriarTrecho,
   useRemoverTrecho,
+  useSalvarLaudo,
   useTrechos,
   type SalvarTrechoInput,
   type TrechoNormativo,
@@ -30,8 +32,29 @@ export function LaudosPage() {
   const [copiado, setCopiado] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const [titulo, setTitulo] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [clienteNome, setClienteNome] = useState('');
+  const [responsavelNome, setResponsavelNome] = useState('');
+  const [responsavelCrea, setResponsavelCrea] = useState('');
+  const [artNumero, setArtNumero] = useState('');
+
   const categorias = useCategoriasTrecho();
   const trechos = useTrechos({ categoria, busca });
+  const salvarLaudo = useSalvarLaudo();
+
+  async function gerarPdf() {
+    const laudo = await salvarLaudo.mutateAsync({
+      titulo: titulo.trim() || 'Laudo Técnico',
+      tipo: tipo || categoria || 'geral',
+      cliente_nome: clienteNome.trim() || null,
+      conteudo: texto,
+      responsavel_nome: responsavelNome.trim() || null,
+      responsavel_crea: responsavelCrea.trim() || null,
+      art_numero: artNumero.trim() || null,
+    });
+    await abrirLaudoPdf(laudo.id);
+  }
 
   const rotuloCategoria = useMemo(() => {
     const mapa = new Map((categorias.data ?? []).map((c) => [c.valor, c.rotulo]));
@@ -81,6 +104,39 @@ export function LaudosPage() {
       <div className="laudos-grid">
         {/* Editor */}
         <section className="laudos-editor">
+          <div className="laudos-metadados">
+            <label className="laudos-meta-largo">
+              Título do laudo
+              <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex.: Laudo de Sistema de Aterramento" />
+            </label>
+            <label>
+              Tipo
+              <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+                <option value="">Selecione…</option>
+                {(categorias.data ?? []).map((c) => (
+                  <option key={c.valor} value={c.valor}>
+                    {c.rotulo}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Cliente
+              <input value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Nome do cliente" />
+            </label>
+            <label>
+              Responsável técnico
+              <input value={responsavelNome} onChange={(e) => setResponsavelNome(e.target.value)} placeholder="Eng. ..." />
+            </label>
+            <label>
+              CREA
+              <input value={responsavelCrea} onChange={(e) => setResponsavelCrea(e.target.value)} placeholder="CREA-SP nº ..." />
+            </label>
+            <label>
+              Nº da ART
+              <input value={artNumero} onChange={(e) => setArtNumero(e.target.value)} placeholder="Registrada no CREA" />
+            </label>
+          </div>
           <div className="laudos-editor-toolbar">
             <span className="laudos-editor-titulo">Documento</span>
             <div className="laudos-editor-acoes">
@@ -89,6 +145,9 @@ export function LaudosPage() {
               </button>
               <button type="button" onClick={() => setTexto('')} disabled={!texto} className="btn-secundario">
                 Limpar
+              </button>
+              <button type="button" onClick={gerarPdf} disabled={!texto || salvarLaudo.isPending} className="btn-primario">
+                {salvarLaudo.isPending ? 'Gerando…' : 'Gerar PDF'}
               </button>
             </div>
           </div>

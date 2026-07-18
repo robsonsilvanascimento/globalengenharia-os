@@ -33,6 +33,39 @@
   overflow: hidden;
   min-height: 520px;
 }
+.laudos-metadados {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem 0.8rem;
+  padding: 0.9rem;
+  border-bottom: 1px solid #e2e6ec;
+  background: #fbfcfe;
+}
+.laudos-metadados label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #55616f;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.laudos-metadados .laudos-meta-largo {
+  grid-column: 1 / -1;
+}
+.laudos-metadados input,
+.laudos-metadados select {
+  padding: 0.42rem 0.55rem;
+  border: 1px solid #d3dae6;
+  border-radius: 7px;
+  font-size: 0.88rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: #1e2733;
+}
+
 .laudos-editor-toolbar {
   display: flex;
   align-items: center;
