@@ -40,8 +40,14 @@ export interface UsuariosRoutesDeps {
   hashService: HashService;
 }
 
-/** Remove campos sensiveis antes de devolver o usuario na resposta HTTP. */
-function paraRespostaPublica(usuario: Usuario) {
+/**
+ * Remove campos sensiveis antes de devolver o usuario na resposta HTTP.
+ * `valorHora` (custo de mao de obra do funcionario) so e incluido quando
+ * `incluirValorHora` e true — usado para nao vazar o custo/hora de um
+ * funcionario para colegas nao-admin que so precisam da lista para popular
+ * selects de tecnico.
+ */
+function paraRespostaPublica(usuario: Usuario, incluirValorHora: boolean) {
   return {
     id: usuario.id,
     nome: usuario.nome,
@@ -49,7 +55,7 @@ function paraRespostaPublica(usuario: Usuario) {
     papel: usuario.papel,
     ativo: usuario.ativo,
     telefone: usuario.telefone ?? null,
-    valorHora: usuario.valorHora ?? null,
+    valorHora: incluirValorHora ? usuario.valorHora ?? null : undefined,
     criadoEm: usuario.criadoEm,
   };
 }
@@ -58,16 +64,18 @@ function paraRespostaPublica(usuario: Usuario) {
  * Registra o CRUD de usuarios. Leitura (GET) e liberada para qualquer papel
  * autenticado, pois atendente/tecnico precisam popular selects de tecnicos
  * (filtro de OS, atribuicao) — a resposta ja remove campos sensiveis via
- * `paraRespostaPublica`. Escrita (POST/PATCH) permanece restrita a admin.
+ * `paraRespostaPublica`, incluindo `valorHora` (visivel so para admin).
+ * Escrita (POST/PATCH) permanece restrita a admin.
  */
 export function registerUsuariosRoutes(app: FastifyInstance, deps: UsuariosRoutesDeps): void {
   const { usuarioRepository, hashService } = deps;
   const autenticado = { preHandler: [authenticate] };
   const somenteAdmin = { preHandler: [authenticate, requireRole(['admin'])] };
 
-  app.get('/usuarios', autenticado, async (_request, reply) => {
+  app.get('/usuarios', autenticado, async (request, reply) => {
+    const incluirValorHora = request.user!.papel === 'admin';
     const usuarios = await usuarioRepository.list();
-    return reply.status(200).send(usuarios.map(paraRespostaPublica));
+    return reply.status(200).send(usuarios.map((usuario) => paraRespostaPublica(usuario, incluirValorHora)));
   });
 
   app.post('/usuarios', somenteAdmin, async (request, reply) => {
@@ -90,7 +98,7 @@ export function registerUsuariosRoutes(app: FastifyInstance, deps: UsuariosRoute
       valorHora: body.valorHora,
     });
 
-    return reply.status(201).send(paraRespostaPublica(usuario));
+    return reply.status(201).send(paraRespostaPublica(usuario, true));
   });
 
   app.patch('/usuarios/:id', somenteAdmin, async (request, reply) => {
@@ -104,7 +112,7 @@ export function registerUsuariosRoutes(app: FastifyInstance, deps: UsuariosRoute
 
     const usuarioAtualizado = await usuarioRepository.update(id, body);
 
-    return reply.status(200).send(paraRespostaPublica(usuarioAtualizado));
+    return reply.status(200).send(paraRespostaPublica(usuarioAtualizado, true));
   });
 
   const pushTokenBodySchema = z.object({

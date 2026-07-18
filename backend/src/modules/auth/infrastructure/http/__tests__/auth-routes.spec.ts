@@ -3,6 +3,15 @@ import 'dotenv/config';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { errorHandler } from '../../../../../shared/http/middlewares/error-handler';
+
+vi.mock('../../../../../shared/http/middlewares/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../../shared/http/middlewares/auth')>();
+  // Estes testes rodam sem Postgres (repositorios fake) e nao exercitam a
+  // checagem de usuario ativo/papel-atual feita pelo `authenticate` de
+  // producao (que consulta o banco) - usam a variante que so valida o JWT.
+  return { ...actual, authenticate: actual.authenticateApenasToken };
+});
+
 import { registerAuthRoutes } from '../routes';
 import { registerUsuariosRoutes } from '../usuarios-routes';
 import { BcryptHashService } from '../../BcryptHashService';
@@ -171,7 +180,7 @@ describe('rotas de auth e usuarios (integracao leve, sem Postgres)', () => {
     expect(response.json()).toMatchObject({ id: 'admin-1', papel: 'admin' });
   });
 
-  it('GET /usuarios com papel nao-admin retorna 200 (leitura liberada para popular selects)', async () => {
+  it('GET /usuarios com papel nao-admin retorna 200 e nao inclui valorHora de nenhum usuario', async () => {
     const tecnico: Usuario = {
       id: 'tecnico-1',
       nome: 'Tecnico',
@@ -179,8 +188,10 @@ describe('rotas de auth e usuarios (integracao leve, sem Postgres)', () => {
       senhaHash: 'irrelevante',
       papel: 'tecnico',
       ativo: true,
+      valorHora: 45,
       criadoEm: new Date(),
     };
+    repository.seed(tecnico);
     const tecnicoToken = tokenService.gerarAccessToken(tecnico);
 
     const response = await app.inject({
@@ -190,6 +201,24 @@ describe('rotas de auth e usuarios (integracao leve, sem Postgres)', () => {
     });
 
     expect(response.statusCode).toBe(200);
+    const usuarios = response.json() as Array<Record<string, unknown>>;
+    expect(usuarios.length).toBeGreaterThan(0);
+    for (const usuario of usuarios) {
+      expect(usuario).not.toHaveProperty('valorHora');
+    }
+  });
+
+  it('GET /usuarios com papel admin inclui o valorHora de cada usuario', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/usuarios',
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const usuarios = response.json() as Array<Record<string, unknown>>;
+    const tecnico = usuarios.find((u) => u.id === 'tecnico-1');
+    expect(tecnico).toMatchObject({ valorHora: 45 });
   });
 
   it('GET /usuarios sem token retorna 401', async () => {

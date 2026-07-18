@@ -2,6 +2,14 @@ import 'dotenv/config';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { errorHandler } from '../../../../../shared/http/middlewares/error-handler';
+
+vi.mock('../../../../../shared/http/middlewares/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../../../shared/http/middlewares/auth')>();
+  // Estes testes rodam sem Postgres (repositorios fake) e nao exercitam a
+  // checagem de usuario ativo/papel-atual feita pelo `authenticate` de
+  // producao (que consulta o banco) - usam a variante que so valida o JWT.
+  return { ...actual, authenticate: actual.authenticateApenasToken };
+});
 import { JwtTokenService } from '../../../../auth/infrastructure/JwtTokenService';
 import type { Usuario } from '../../../../auth/domain/Usuario';
 import type { Cliente } from '../../../../clientes/domain/Cliente';
