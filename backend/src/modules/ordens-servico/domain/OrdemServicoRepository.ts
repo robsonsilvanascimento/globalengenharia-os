@@ -118,6 +118,20 @@ export interface OrdemServicoRepository {
    */
   findByNumero(numero: string): Promise<OrdemServico | null>;
   update(id: string, dados: AtualizarOrdemServicoDados): Promise<OrdemServico>;
+  /**
+   * Atualiza os dados de status/fechamento apenas se o status atual no banco
+   * ainda for `statusEsperado` (compare-and-swap otimista, equivalente a um
+   * `UPDATE ... WHERE id = ? AND status = ?`). Retorna `null` quando nenhuma
+   * linha foi afetada porque o status ja havia mudado entre a leitura feita
+   * pelo caller e esta chamada — sinal de que houve uma transicao
+   * concorrente, para o caller tratar como conflito em vez de sobrescrever
+   * silenciosamente a mudanca alheia.
+   */
+  atualizarStatusSeAtual(
+    id: string,
+    statusEsperado: StatusOS,
+    dados: Pick<AtualizarOrdemServicoDados, 'status' | 'fechadoEm'>,
+  ): Promise<OrdemServico | null>;
   list(
     filtros: ListarOrdensServicoFiltros,
     opcoes: ListarOrdensServicoOpcoes,

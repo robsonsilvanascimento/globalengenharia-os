@@ -6,6 +6,8 @@ export interface GerarOuReutilizarPixInput {
   valorCobrado: number;
   clienteNome: string;
   clienteEmail?: string;
+  /** Admin que disparou a geracao manualmente pelo painel; ausente quando automatico. */
+  criadoPorId?: string;
 }
 
 /**
@@ -55,6 +57,7 @@ export async function gerarOuReutilizarPix(
           pixQrCode: qrCode,
           pixCopiaECola: copiaECola,
           mercadoPagoId,
+          criadoPorId: input.criadoPorId,
         },
       });
     },

@@ -1,7 +1,11 @@
 import { Worker, type Job } from 'bullmq';
 import { redisConnection } from '../../../../shared/infra/RedisConnection';
 import { logger } from '../../../../shared/infra/Logger';
-import { QUEUE_NAMES, type WhatsappConversaJobData } from '../../../../shared/infra/queues';
+import {
+  QUEUE_NAMES,
+  drainMensagensPendentes,
+  type WhatsappConversaJobData,
+} from '../../../../shared/infra/queues';
 import {
   enviarMenuCategorias,
   enviarTexto,
@@ -204,20 +208,20 @@ async function processarVideoRecebido(
 }
 
 /**
- * Processa um job da fila `whatsapp-conversa`: marca a mensagem como lida e
- * exibe o indicador de "digitando" (feedback visual, best-effort). Mensagens
- * de video sao desviadas para `processarVideoRecebido` (registro de midia +
- * confirmacao, sem tocar no estado da conversa). Para as demais, resolve o
- * conteudo textual da mensagem (transcrevendo audio quando aplicavel), roda o
- * fluxo guiado (`ProcessarMensagemWhatsappUseCase`), envia de fato as
- * respostas calculadas via Meta Cloud API (em audio quando a pergunta veio em
- * audio) e persiste as mensagens de entrada/saida.
+ * Processa uma unica mensagem: marca como lida e exibe o indicador de
+ * "digitando" (feedback visual, best-effort). Mensagens de video sao
+ * desviadas para `processarVideoRecebido` (registro de midia + confirmacao,
+ * sem tocar no estado da conversa). Para as demais, resolve o conteudo
+ * textual da mensagem (transcrevendo audio quando aplicavel), roda o fluxo
+ * guiado (`ProcessarMensagemWhatsappUseCase`), envia de fato as respostas
+ * calculadas via Meta Cloud API (em audio quando a pergunta veio em audio) e
+ * persiste as mensagens de entrada/saida.
  */
-export async function processarJob(
-  job: Job<WhatsappConversaJobData>,
+async function processarMensagemUnica(
+  mensagem: WhatsappConversaJobData,
   deps: WhatsappConversaWorkerDeps,
 ): Promise<void> {
-  const { telefoneCliente, waMessageId, tipo, conteudo } = job.data;
+  const { telefoneCliente, waMessageId, tipo, conteudo } = mensagem;
 
   try {
     const statusLeitura = await marcarComoLidoEDigitando(waMessageId);
@@ -298,6 +302,37 @@ export async function processarJob(
       conteudo: envio.conteudo,
       whatsappMessageId: envio.resultado.messageId,
     });
+  }
+}
+
+/**
+ * Processa um job da fila `whatsapp-conversa`. Como o jobId e deduplicado
+ * por telefone (ver `enqueueWhatsappConversaJob`), este job pode representar
+ * mais de uma mensagem recebida em rajada: em vez de processar so
+ * `job.data`, drena TODAS as mensagens bufferizadas para este telefone
+ * (`drainMensagensPendentes`) e processa cada uma em ordem. Repete o drain
+ * ao final: se novas mensagens chegaram enquanto este job (o unico permitido
+ * para este telefone no momento) ainda estava processando as anteriores,
+ * elas ficariam presas no buffer sem nenhum job novo enfileirado para
+ * drena-las — o loop garante que sejam tratadas antes deste job terminar.
+ */
+export async function processarJob(
+  job: Job<WhatsappConversaJobData>,
+  deps: WhatsappConversaWorkerDeps,
+): Promise<void> {
+  let pendentes = await drainMensagensPendentes(job.data.telefoneCliente);
+
+  if (pendentes.length === 0) {
+    // Rede de seguranca: nao deveria ocorrer, ja que o push ao buffer
+    // acontece sempre antes do enqueue do job (ver `enqueueWhatsappConversaJob`).
+    pendentes = [job.data];
+  }
+
+  while (pendentes.length > 0) {
+    for (const mensagem of pendentes) {
+      await processarMensagemUnica(mensagem, deps);
+    }
+    pendentes = await drainMensagensPendentes(job.data.telefoneCliente);
   }
 }
 

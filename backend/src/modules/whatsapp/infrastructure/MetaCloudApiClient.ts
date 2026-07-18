@@ -17,6 +17,10 @@ type FetchFn = typeof globalThis.fetch;
 
 const GRAPH_API_VERSION = 'v19.0';
 
+// Sem timeout, uma Meta Cloud API lenta/travada prende o worker BullMQ
+// indefinidamente numa unica mensagem, atrasando toda a fila de envio.
+const TIMEOUT_MS = 15_000;
+
 function montarUrlEnvio(): string {
   const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
   return `https://graph.facebook.com/${GRAPH_API_VERSION}/${phoneNumberId}/messages`;
@@ -72,6 +76,7 @@ async function executarEnvio(
       method: 'POST',
       headers: montarHeaders(),
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     const body = (await response.json().catch(() => ({}))) as
@@ -209,6 +214,7 @@ export async function uploadMedia(
       method: 'POST',
       headers: montarHeadersMedia(),
       body: formData,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     const body = (await response.json().catch(() => ({}))) as
@@ -324,6 +330,7 @@ export async function marcarComoLidoEDigitando(
         message_id: messageId,
         typing_indicator: { type: 'text' },
       }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     const body = (await response.json().catch(() => ({}))) as MetaStatusResponseBody | MetaErrorResponseBody;
@@ -371,6 +378,7 @@ export async function baixarMedia(
     const infoResponse = await fetchFn(`https://graph.facebook.com/${GRAPH_API_VERSION}/${mediaId}`, {
       method: 'GET',
       headers: montarHeadersMedia(),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     const infoBody = (await infoResponse.json().catch(() => ({}))) as
@@ -400,6 +408,7 @@ export async function baixarMedia(
     const downloadResponse = await fetchFn(url, {
       method: 'GET',
       headers: montarHeadersMedia(),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
 
     if (!downloadResponse.ok) {

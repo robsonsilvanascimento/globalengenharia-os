@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { ValidationError } from '../../../shared/http/errors/AppError';
-import { gerarPixOrdemServico } from '../infrastructure/mercadopago/MercadoPagoService';
+import { gerarOuReutilizarPix } from './GerarOuReutilizarPixUseCase';
 
 interface GerarPixInput {
   ordemServicoId: string;
@@ -22,24 +22,21 @@ export async function GerarPixUseCase(
     throw new ValidationError('OS sem valor cobrado definido');
   }
 
-  const { mercadoPagoId, qrCode, copiaECola } = await gerarPixOrdemServico({
-    ordemServicoId,
-    valor: valorCobrado,
-    clienteNome: os.cliente.nome,
-    clienteEmail: os.cliente.email ?? undefined,
-  });
+  if (os.statusPagamento === 'pago') {
+    throw new ValidationError('OS ja esta com pagamento confirmado');
+  }
 
-  const pagamentoOS = await prisma.pagamentoOS.create({
-    data: {
+  // Reaproveita/gera sob o mesmo advisory lock usado pelo fluxo automatico,
+  // evitando que uma geracao manual pelo painel crie uma cobranca duplicada
+  // no Mercado Pago para uma OS que ja tem um Pix pendente.
+  return gerarOuReutilizarPix(
+    {
       ordemServicoId,
-      tipo: 'pix_automatico',
-      valor: valorCobrado,
-      pixQrCode: qrCode,
-      pixCopiaECola: copiaECola,
-      mercadoPagoId,
+      valorCobrado,
+      clienteNome: os.cliente.nome,
+      clienteEmail: os.cliente.email ?? undefined,
       criadoPorId,
     },
-  });
-
-  return pagamentoOS;
+    prisma,
+  );
 }

@@ -52,7 +52,7 @@ export function registerClientesRoutes(app: FastifyInstance, deps: ClientesRoute
 
   const listarHistoricoOSClienteUseCase = new ListarHistoricoOSClienteUseCase({ ordemServicoRepository });
 
-  app.get('/clientes', { preHandler: authenticate }, async (request, reply) => {
+  app.get('/clientes', atendenteOuAdmin, async (request, reply) => {
     const query = listQuerySchema.parse(request.query);
     const clientes = await clienteRepository.list();
 
@@ -87,7 +87,7 @@ export function registerClientesRoutes(app: FastifyInstance, deps: ClientesRoute
     return reply.status(201).send(cliente);
   });
 
-  app.get('/clientes/:id', { preHandler: authenticate }, async (request, reply) => {
+  app.get('/clientes/:id', atendenteOuAdmin, async (request, reply) => {
     const { id } = idParamsSchema.parse(request.params);
 
     const cliente = await clienteRepository.findById(id);
@@ -108,6 +108,7 @@ export function registerClientesRoutes(app: FastifyInstance, deps: ClientesRoute
   app.get('/clientes/:clienteId/historico-os', adminOuTecnico, async (request, reply) => {
     const { clienteId } = clienteIdParamsSchema.parse(request.params);
     const query = historicoOSQuerySchema.parse(request.query);
+    const ocultarValor = request.user!.papel === 'tecnico';
 
     const items = await listarHistoricoOSClienteUseCase.execute({
       clienteId,
@@ -123,14 +124,14 @@ export function registerClientesRoutes(app: FastifyInstance, deps: ClientesRoute
         descricao_problema: item.descricaoProblema,
         categoria_nome: item.categoriaNome,
         tecnico_nome: item.tecnicoNome,
-        valor_cobrado: item.valorCobrado,
+        valor_cobrado: ocultarValor ? undefined : item.valorCobrado,
         criado_em: item.criadoEm,
         fechado_em: item.fechadoEm,
       })),
     });
   });
 
-  app.get('/clientes/:id/resumo', { preHandler: authenticate }, async (request, reply) => {
+  app.get('/clientes/:id/resumo', atendenteOuAdmin, async (request, reply) => {
     const { id } = idParamsSchema.parse(request.params);
 
     try {

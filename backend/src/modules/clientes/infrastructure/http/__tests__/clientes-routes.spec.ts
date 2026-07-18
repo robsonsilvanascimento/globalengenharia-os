@@ -206,15 +206,25 @@ describe('rotas de clientes (integracao leve, sem Postgres)', () => {
     expect(response.statusCode).toBe(401);
   });
 
-  it('GET /clientes com token valido lista clientes, qualquer papel', async () => {
+  it('GET /clientes com token de atendente lista clientes', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/clientes',
+      headers: { authorization: `Bearer ${atendenteToken}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toHaveLength(3);
+  });
+
+  it('GET /clientes com token de tecnico retorna 403 (lista completa de clientes nao e visivel para tecnico)', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/clientes',
       headers: { authorization: `Bearer ${tecnicoToken}` },
     });
 
-    expect(response.statusCode).toBe(200);
-    expect(response.json()).toHaveLength(3);
+    expect(response.statusCode).toBe(403);
   });
 
   it('GET /clientes?q= filtra por nome ou telefone', async () => {
@@ -334,11 +344,11 @@ describe('rotas de clientes (integracao leve, sem Postgres)', () => {
     expect(response.statusCode).toBe(401);
   });
 
-  it('GET /clientes/:id existente retorna dados cadastrais, qualquer papel', async () => {
+  it('GET /clientes/:id existente retorna dados cadastrais para atendente/admin', async () => {
     const response = await app.inject({
       method: 'GET',
       url: `/clientes/${CLIENTE_COM_OS_ID}`,
-      headers: { authorization: `Bearer ${tecnicoToken}` },
+      headers: { authorization: `Bearer ${atendenteToken}` },
     });
 
     expect(response.statusCode).toBe(200);
@@ -349,6 +359,16 @@ describe('rotas de clientes (integracao leve, sem Postgres)', () => {
       email: 'maria@example.com',
       documento: '12345678900',
     });
+  });
+
+  it('GET /clientes/:id com token de tecnico retorna 403', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: `/clientes/${CLIENTE_COM_OS_ID}`,
+      headers: { authorization: `Bearer ${tecnicoToken}` },
+    });
+
+    expect(response.statusCode).toBe(403);
   });
 
   it('GET /clientes/:id inexistente retorna 404', async () => {
@@ -365,7 +385,7 @@ describe('rotas de clientes (integracao leve, sem Postgres)', () => {
     const response = await app.inject({
       method: 'GET',
       url: `/clientes/${CLIENTE_COM_OS_ID}/resumo`,
-      headers: { authorization: `Bearer ${tecnicoToken}` },
+      headers: { authorization: `Bearer ${atendenteToken}` },
     });
 
     expect(response.statusCode).toBe(200);

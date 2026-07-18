@@ -6,7 +6,7 @@ import type {
   ListarHistoricoResultado,
 } from '../../domain/HistoricoStatusOSRepository';
 import type { NumeroOSGenerator } from '../../domain/NumeroOSGenerator';
-import type { OrdemServico } from '../../domain/OrdemServico';
+import type { OrdemServico, StatusOS } from '../../domain/OrdemServico';
 import type {
   AtualizarOrdemServicoDados,
   CriarOrdemServicoDados,
@@ -85,6 +85,23 @@ export class FakeOrdemServicoRepository implements OrdemServicoRepository {
     if (dados.ajudanteId !== undefined) ordemServico.ajudanteId = dados.ajudanteId;
     if (dados.fechadoEm !== undefined) ordemServico.fechadoEm = dados.fechadoEm ?? undefined;
     if (dados.valorCobrado !== undefined) ordemServico.valorCobrado = dados.valorCobrado;
+    ordemServico.atualizadoEm = new Date();
+
+    return ordemServico;
+  }
+
+  async atualizarStatusSeAtual(
+    id: string,
+    statusEsperado: StatusOS,
+    dados: Pick<AtualizarOrdemServicoDados, 'status' | 'fechadoEm'>,
+  ): Promise<OrdemServico | null> {
+    const ordemServico = this.ordens.find((ordem) => ordem.id === id);
+    if (!ordemServico || ordemServico.status !== statusEsperado) {
+      return null;
+    }
+
+    if (dados.status !== undefined) ordemServico.status = dados.status;
+    if (dados.fechadoEm !== undefined) ordemServico.fechadoEm = dados.fechadoEm ?? undefined;
     ordemServico.atualizadoEm = new Date();
 
     return ordemServico;

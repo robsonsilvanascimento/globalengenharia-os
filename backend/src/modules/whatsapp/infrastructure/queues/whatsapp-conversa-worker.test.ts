@@ -10,6 +10,7 @@ const {
   baixarMediaMock,
   transcreverAudioMock,
   gerarAudioMock,
+  drainMensagensPendentesMock,
 } = vi.hoisted(() => ({
   enviarTextoMock: vi.fn(),
   enviarMenuCategoriasMock: vi.fn(),
@@ -18,6 +19,7 @@ const {
   baixarMediaMock: vi.fn(),
   transcreverAudioMock: vi.fn(),
   gerarAudioMock: vi.fn(),
+  drainMensagensPendentesMock: vi.fn(),
 }));
 
 vi.mock('../MetaCloudApiClient', () => ({
@@ -27,6 +29,14 @@ vi.mock('../MetaCloudApiClient', () => ({
   marcarComoLidoEDigitando: marcarComoLidoEDigitandoMock,
   baixarMedia: baixarMediaMock,
 }));
+
+vi.mock('../../../../shared/infra/queues', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../../../shared/infra/queues')>();
+  return {
+    ...original,
+    drainMensagensPendentes: drainMensagensPendentesMock,
+  };
+});
 
 vi.mock('../../../../shared/infra/audio/TranscreverAudioService', () => ({
   transcreverAudio: transcreverAudioMock,
@@ -86,6 +96,10 @@ describe('processarJob (whatsapp-conversa-worker)', () => {
     baixarMediaMock.mockReset();
     transcreverAudioMock.mockReset();
     gerarAudioMock.mockReset();
+    // Por padrao, simula o buffer vazio (nenhuma mensagem em rajada): o
+    // processor cai no fallback de processar so `job.data`, preservando o
+    // comportamento assumido pelos testes existentes (mensagem unica).
+    drainMensagensPendentesMock.mockReset().mockResolvedValue([]);
   });
 
   it('chama marcarComoLidoEDigitando com o waMessageId assim que o job e processado', async () => {
@@ -340,6 +354,65 @@ describe('processarJob (whatsapp-conversa-worker)', () => {
 
       expect(deps.processarMensagemWhatsappUseCase.execute).not.toHaveBeenCalled();
       expect(deps.mensagemWhatsappRepository.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('mensagens em rajada (buffer de deduplicacao por telefone)', () => {
+    it('processa todas as mensagens bufferizadas para o telefone, nao so a de job.data', async () => {
+      const deps = buildDeps();
+      deps.processarMensagemWhatsappUseCase.execute.mockResolvedValue({
+        conversa: { id: 'conversa-1' },
+        respostasParaEnviar: [],
+      });
+
+      // Simula 2 mensagens chegadas em rajada para o mesmo telefone: o
+      // buffer traz ambas de uma vez (a segunda nao teria job proprio, ja
+      // que o jobId e deduplicado por telefone).
+      drainMensagensPendentesMock
+        .mockResolvedValueOnce([
+          { telefoneCliente: TELEFONE, waMessageId: 'wamid.1', tipo: 'text', conteudo: 'Oi', recebidoEm: '' },
+          { telefoneCliente: TELEFONE, waMessageId: 'wamid.2', tipo: 'text', conteudo: 'Tudo bem?', recebidoEm: '' },
+        ])
+        .mockResolvedValueOnce([]);
+
+      const job = buildJob({ tipo: 'text', conteudo: 'Oi' });
+      await processarJob(job, deps);
+
+      expect(deps.processarMensagemWhatsappUseCase.execute).toHaveBeenCalledTimes(2);
+      expect(deps.processarMensagemWhatsappUseCase.execute).toHaveBeenNthCalledWith(1, {
+        telefone: TELEFONE,
+        mensagemRecebida: 'Oi',
+      });
+      expect(deps.processarMensagemWhatsappUseCase.execute).toHaveBeenNthCalledWith(2, {
+        telefone: TELEFONE,
+        mensagemRecebida: 'Tudo bem?',
+      });
+    });
+
+    it('drena de novo apos processar, para pegar mensagens que chegaram durante o processamento', async () => {
+      const deps = buildDeps();
+      deps.processarMensagemWhatsappUseCase.execute.mockResolvedValue({
+        conversa: { id: 'conversa-1' },
+        respostasParaEnviar: [],
+      });
+
+      drainMensagensPendentesMock
+        .mockResolvedValueOnce([
+          { telefoneCliente: TELEFONE, waMessageId: 'wamid.1', tipo: 'text', conteudo: 'Primeira', recebidoEm: '' },
+        ])
+        .mockResolvedValueOnce([
+          { telefoneCliente: TELEFONE, waMessageId: 'wamid.2', tipo: 'text', conteudo: 'Chegou depois', recebidoEm: '' },
+        ])
+        .mockResolvedValueOnce([]);
+
+      const job = buildJob({ tipo: 'text', conteudo: 'Primeira' });
+      await processarJob(job, deps);
+
+      expect(deps.processarMensagemWhatsappUseCase.execute).toHaveBeenCalledTimes(2);
+      expect(deps.processarMensagemWhatsappUseCase.execute).toHaveBeenNthCalledWith(2, {
+        telefone: TELEFONE,
+        mensagemRecebida: 'Chegou depois',
+      });
     });
   });
 });

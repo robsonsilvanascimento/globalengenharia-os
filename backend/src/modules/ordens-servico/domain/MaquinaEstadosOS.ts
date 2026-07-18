@@ -88,6 +88,8 @@ export function podeTransicionar(
     );
   }
 
-  // atendente / admin podem executar qualquer transicao de progresso valida
-  return true;
+  // atendente / admin podem executar qualquer transicao de progresso valida.
+  // Lista explicita (em vez de um "else return true") para que um papel novo
+  // adicionado no futuro nao herde essa permissao por omissao.
+  return papelUsuario === 'atendente' || papelUsuario === 'admin';
 }

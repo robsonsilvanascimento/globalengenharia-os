@@ -39,4 +39,15 @@ export async function gerarPixOrdemServico(params: {
   };
 }
 
+/**
+ * Cancela um pagamento Pix no Mercado Pago. So funciona enquanto o pagamento
+ * ainda esta pendente (Pix expira/cancela automaticamente); se o cliente ja
+ * pagou, o Mercado Pago rejeita o cancelamento e o erro sobe para quem
+ * chamou tratar (ex.: orientar a fazer um reembolso em vez de cancelamento).
+ */
+export async function cancelarPixOrdemServico(mercadoPagoId: string): Promise<void> {
+  const payment = new Payment(client);
+  await payment.cancel({ id: mercadoPagoId });
+}
+
 export { client as mercadoPagoClient };

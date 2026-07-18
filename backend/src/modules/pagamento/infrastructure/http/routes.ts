@@ -4,7 +4,9 @@ import { authenticate, requireRole } from '../../../../shared/http/middlewares/a
 import { prisma } from '../../../../shared/infra/PrismaClient';
 import { GerarPixUseCase } from '../../application/GerarPixUseCase';
 import { registrarPagamentoManual } from '../../application/RegistrarPagamentoManualUseCase';
-import { NotFoundError } from '../../../../shared/http/errors/AppError';
+import { cancelarPixOrdemServico } from '../mercadopago/MercadoPagoService';
+import { NotFoundError, ValidationError } from '../../../../shared/http/errors/AppError';
+import { logger } from '../../../../shared/infra/Logger';
 
 const osIdParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -73,6 +75,34 @@ export function registerPagamentoRoutes(app: FastifyInstance): void {
       const pagamento = await prisma.pagamentoOS.findUnique({ where: { id: pagamentoId } });
       if (!pagamento || pagamento.ordemServicoId !== id) {
         throw new NotFoundError('Pagamento nao encontrado');
+      }
+
+      if (pagamento.statusPagamento === 'cancelado') {
+        return reply.status(200).send(pagamento);
+      }
+
+      if (pagamento.statusPagamento === 'pago') {
+        throw new ValidationError(
+          'Pagamento ja confirmado nao pode ser cancelado por aqui - trate como estorno manual',
+        );
+      }
+
+      if (pagamento.tipo === 'pix_automatico' && pagamento.mercadoPagoId) {
+        try {
+          await cancelarPixOrdemServico(pagamento.mercadoPagoId);
+        } catch (err) {
+          // Se o Mercado Pago recusar o cancelamento (ex.: o cliente pagou
+          // segundos antes desta chamada), nao atualizamos o status local:
+          // isso deixaria o registro divergindo do que realmente aconteceu
+          // no Mercado Pago (Pix pago, mas marcado como cancelado aqui).
+          logger.error(
+            { pagamentoOSId: pagamento.id, mercadoPagoId: pagamento.mercadoPagoId, err },
+            'Falha ao cancelar Pix no Mercado Pago',
+          );
+          throw new ValidationError(
+            'Nao foi possivel cancelar o Pix no Mercado Pago - verifique se ele ja foi pago',
+          );
+        }
       }
 
       const atualizado = await prisma.pagamentoOS.update({

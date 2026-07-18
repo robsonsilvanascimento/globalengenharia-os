@@ -2,6 +2,7 @@ import type { EventBus } from '../../../shared/domain/EventBus';
 import { OS_STATUS_ALTERADO_EVENT, type OSStatusAlterado } from '../../../shared/domain/events/OSStatusAlterado';
 import { ValidarChecklistCompletoUseCase } from '../../checklist/application/ValidarChecklistCompletoUseCase';
 import type { ChecklistRepository } from '../../checklist/domain/ChecklistRepository';
+import { OrdemServicoConcorrenciaError } from '../domain/errors/OrdemServicoConcorrenciaError';
 import { OrdemServicoNaoEncontradaError } from '../domain/errors/OrdemServicoNaoEncontradaError';
 import { TransicaoInvalidaError } from '../domain/errors/TransicaoInvalidaError';
 import type { HistoricoStatusOSRepository } from '../domain/HistoricoStatusOSRepository';
@@ -65,10 +66,24 @@ export class AtualizarStatusOrdemServicoUseCase {
 
     const fechaOS = STATUS_QUE_FECHAM_OS.includes(input.statusNovo);
 
-    const ordemAtualizada = await ordemServicoRepository.update(input.ordemServicoId, {
-      status: input.statusNovo,
-      fechadoEm: fechaOS ? new Date() : undefined,
-    });
+    // Compare-and-swap: so aplica se o status no banco ainda for
+    // `statusAnterior` (o que foi lido no inicio deste metodo). Evita que
+    // duas transicoes concorrentes para a mesma OS (ex.: o bot e um
+    // atendente quase ao mesmo tempo) ambas passem pela validacao de
+    // `podeTransicionar` com o mesmo estado "antigo" e uma sobrescreva a
+    // outra silenciosamente.
+    const ordemAtualizada = await ordemServicoRepository.atualizarStatusSeAtual(
+      input.ordemServicoId,
+      statusAnterior,
+      {
+        status: input.statusNovo,
+        fechadoEm: fechaOS ? new Date() : undefined,
+      },
+    );
+
+    if (!ordemAtualizada) {
+      throw new OrdemServicoConcorrenciaError(input.ordemServicoId);
+    }
 
     await historicoStatusOSRepository.create({
       ordemServicoId: input.ordemServicoId,

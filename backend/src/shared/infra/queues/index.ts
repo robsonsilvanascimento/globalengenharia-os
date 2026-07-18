@@ -55,17 +55,17 @@ const defaultJobOptions: JobsOptions = {
  * Fila responsavel por processar mensagens recebidas do webhook do WhatsApp.
  *
  * Concorrencia por conversa: o jobId e derivado do telefone do cliente
- * (ver `buildConversaJobId`). Como o BullMQ nao enfileira novamente um job
- * cujo id ja existe em espera/ativo, mensagens que chegam em rajada para o
- * mesmo telefone sao deduplicadas em um unico job pendente, garantindo que
- * no maximo 1 job por conversa esteja em processamento por vez.
+ * (ver `buildConversaJobId`). Como o BullMQ nao enfileira novamente (nem
+ * atualiza `data`) um job cujo id ja existe em espera/ativo, mensagens que
+ * chegam em rajada para o mesmo telefone colapsariam em um unico job — se o
+ * processor confiasse apenas em `job.data`, a segunda mensagem seria
+ * silenciosamente perdida (o `add()` com jobId duplicado e um no-op).
  *
- * IMPORTANTE para quem implementar o worker: por causa dessa deduplicacao,
- * o processor NAO deve confiar apenas em `job.data` como a mensagem a ser
- * tratada — ele deve reler o estado/mensagens pendentes da conversa a partir
- * da fonte de verdade (banco/buffer da conversa) no momento do processamento,
- * para nao perder mensagens que chegaram enquanto um job anterior do mesmo
- * telefone ainda estava na fila.
+ * Por isso toda mensagem recebida e tambem empilhada num buffer no Redis por
+ * telefone (`pushMensagemPendente`/`drainMensagensPendentes`) antes do
+ * `add()`: o worker drena e processa TODAS as mensagens pendentes daquele
+ * telefone a cada execucao, nao so a de `job.data`, entao nenhuma mensagem
+ * chegada durante a deduplicacao fica sem tratamento.
  */
 export const whatsappConversaQueue = new Queue<WhatsappConversaJobData>(
   QUEUE_NAMES.WHATSAPP_CONVERSA,
@@ -116,10 +116,49 @@ export function buildConversaJobId(telefoneCliente: string): string {
   return `conversa:${telefoneCliente}`;
 }
 
+function buildMensagensPendentesKey(telefoneCliente: string): string {
+  return `whatsapp:pendentes:${telefoneCliente}`;
+}
+
+/** Tempo maximo que uma mensagem pode ficar bufferizada (rede de seguranca contra chave orfa). */
+const TTL_BUFFER_MENSAGENS_SEGUNDOS = 3600;
+
+async function pushMensagemPendente(
+  telefoneCliente: string,
+  data: WhatsappConversaJobData,
+): Promise<void> {
+  const key = buildMensagensPendentesKey(telefoneCliente);
+  await redisConnection
+    .multi()
+    .rpush(key, JSON.stringify(data))
+    .expire(key, TTL_BUFFER_MENSAGENS_SEGUNDOS)
+    .exec();
+}
+
+/**
+ * Le e limpa atomicamente (via MULTI/EXEC) o buffer de mensagens pendentes de
+ * um telefone. Atomico porque o Redis executa os comandos de um MULTI como
+ * uma unica unidade — nenhum `pushMensagemPendente` concorrente pode se
+ * intercalar entre o LRANGE e o DEL.
+ */
+export async function drainMensagensPendentes(
+  telefoneCliente: string,
+): Promise<WhatsappConversaJobData[]> {
+  const key = buildMensagensPendentesKey(telefoneCliente);
+  const resultado = await redisConnection.multi().lrange(key, 0, -1).del(key).exec();
+  const itens = (resultado?.[0]?.[1] as string[] | null) ?? [];
+  return itens.map((item) => JSON.parse(item) as WhatsappConversaJobData);
+}
+
 export async function enqueueWhatsappConversaJob(
   telefoneCliente: string,
   data: WhatsappConversaJobData,
 ): Promise<void> {
+  // Empilha antes de enfileirar o job: se o jobId ja existir (deduplicacao),
+  // o `add()` abaixo e um no-op, mas a mensagem ja esta no buffer para o
+  // worker drenar.
+  await pushMensagemPendente(telefoneCliente, data);
+
   await whatsappConversaQueue.add('processar-mensagem', data, {
     jobId: buildConversaJobId(telefoneCliente),
   });

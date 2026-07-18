@@ -1,6 +1,6 @@
 import type { OrdemServico as OrdemServicoPrisma, PrismaClient } from '@prisma/client';
 import { prisma } from '../../../shared/infra/PrismaClient';
-import type { OrdemServico } from '../domain/OrdemServico';
+import type { OrdemServico, StatusOS } from '../domain/OrdemServico';
 import type {
   AtualizarOrdemServicoDados,
   CriarOrdemServicoDados,
@@ -100,6 +100,27 @@ export class PrismaOrdemServicoRepository implements OrdemServicoRepository {
         isPendente: dados.isPendente,
       },
     });
+    return paraEntidade(registro);
+  }
+
+  async atualizarStatusSeAtual(
+    id: string,
+    statusEsperado: StatusOS,
+    dados: Pick<AtualizarOrdemServicoDados, 'status' | 'fechadoEm'>,
+  ): Promise<OrdemServico | null> {
+    const resultado = await this.client.ordemServico.updateMany({
+      where: { id, status: statusEsperado },
+      data: {
+        status: dados.status,
+        fechadoEm: dados.fechadoEm,
+      },
+    });
+
+    if (resultado.count === 0) {
+      return null;
+    }
+
+    const registro = await this.client.ordemServico.findUniqueOrThrow({ where: { id } });
     return paraEntidade(registro);
   }
 

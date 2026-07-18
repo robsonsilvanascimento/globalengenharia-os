@@ -10,6 +10,7 @@ import { ListarOrdensServicoUseCase } from '../../application/ListarOrdensServic
 import { RegistrarValorOrdemServicoUseCase } from '../../application/RegistrarValorOrdemServicoUseCase';
 import { VerificarDisponibilidadeUseCase } from '../../application/VerificarDisponibilidadeUseCase';
 import { AjudanteIndisponivelError } from '../../domain/errors/AjudanteIndisponivelError';
+import { OrdemServicoConcorrenciaError } from '../../domain/errors/OrdemServicoConcorrenciaError';
 import { OrdemServicoNaoEncontradaError } from '../../domain/errors/OrdemServicoNaoEncontradaError';
 import { TecnicoIndisponivelError } from '../../domain/errors/TecnicoIndisponivelError';
 import { TransicaoInvalidaError } from '../../domain/errors/TransicaoInvalidaError';
@@ -62,14 +63,12 @@ const criarOrdemServicoBodySchema = z.object({
   prioridade: prioridadeSchema.optional(),
 });
 
-const atualizarOrdemServicoBodySchema = z
-  .object({
-    descricao_problema: z.string().min(1).optional(),
-    endereco_atendimento: z.string().optional(),
-    prioridade: prioridadeSchema.optional(),
-    data_agendada: z.coerce.date().optional(),
-  })
-  .passthrough();
+const atualizarOrdemServicoBodySchema = z.object({
+  descricao_problema: z.string().min(1).optional(),
+  endereco_atendimento: z.string().optional(),
+  prioridade: prioridadeSchema.optional(),
+  data_agendada: z.coerce.date().optional(),
+});
 
 const atualizarStatusBodySchema = z.object({
   status: statusSchema,
@@ -110,6 +109,9 @@ function relancarComoAppError(error: unknown): never {
   if (error instanceof AjudanteIndisponivelError) {
     throw new ConflictError(error.message);
   }
+  if (error instanceof OrdemServicoConcorrenciaError) {
+    throw new ConflictError(error.message);
+  }
   throw error;
 }
 
@@ -127,6 +129,26 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
 
   const atendenteOuAdmin = { preHandler: [authenticate, requireRole(['atendente', 'admin'])] };
   const somenteAdmin = { preHandler: [authenticate, requireRole(['admin'])] };
+  const equipeOperacional = {
+    preHandler: [authenticate, requireRole(['atendente', 'admin', 'tecnico'])],
+  };
+
+  /** Verdadeiro quando o usuario logado e um tecnico sem permissao de ver valores cobrados. */
+  function deveOcultarValor(papel: string): boolean {
+    return papel === 'tecnico';
+  }
+
+  /**
+   * Tecnico so pode acessar a OS se estiver atribuido a ela (como tecnico ou
+   * ajudante) — evita que qualquer tecnico autenticado veja OS de outros.
+   * Retorna 404 (nao 403) para nao revelar a existencia da OS a quem nao tem
+   * acesso, seguindo o mesmo padrao ja usado na consulta via WhatsApp.
+   */
+  function garantirAcessoTecnico(ordemServico: OrdemServico, usuarioId: string, papel: string): void {
+    if (papel !== 'tecnico') return;
+    if (ordemServico.tecnicoId === usuarioId || ordemServico.ajudanteId === usuarioId) return;
+    throw new NotFoundError('Ordem de Servico nao encontrada');
+  }
 
   const criarOrdemServicoUseCase = new CriarOrdemServicoUseCase({
     ordemServicoRepository,
@@ -157,7 +179,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
   });
 
   /** Monta o DTO HTTP (snake_case) de uma OS, enriquecido com cliente_nome/tecnico_nome. */
-  async function montarOrdemServicoResponse(ordemServico: OrdemServico) {
+  async function montarOrdemServicoResponse(ordemServico: OrdemServico, ocultarValor = false) {
     const [cliente, tecnico] = await Promise.all([
       clienteRepository.findById(ordemServico.clienteId),
       ordemServico.tecnicoId ? usuarioRepository.findById(ordemServico.tecnicoId) : Promise.resolve(null),
@@ -175,7 +197,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
       prioridade: ordemServico.prioridade,
       tecnico_id: ordemServico.tecnicoId,
       tecnico_nome: tecnico?.nome,
-      valor_cobrado: ordemServico.valorCobrado ?? null,
+      valor_cobrado: ocultarValor ? undefined : ordemServico.valorCobrado ?? null,
       data_agendada: ordemServico.dataAgendada ?? null,
       criado_em: ordemServico.criadoEm,
       atualizado_em: ordemServico.atualizadoEm,
@@ -187,6 +209,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     ordens: OrdemServico[],
     nomeClientePorId: Map<string, string>,
     nomeUsuarioPorId: Map<string, string>,
+    ocultarValor = false,
   ) {
     return ordens.map((ordemServico) => ({
       id: ordemServico.id,
@@ -200,7 +223,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
       prioridade: ordemServico.prioridade,
       tecnico_id: ordemServico.tecnicoId,
       tecnico_nome: ordemServico.tecnicoId ? nomeUsuarioPorId.get(ordemServico.tecnicoId) : undefined,
-      valor_cobrado: ordemServico.valorCobrado ?? null,
+      valor_cobrado: ocultarValor ? undefined : ordemServico.valorCobrado ?? null,
       data_agendada: ordemServico.dataAgendada ?? null,
       criado_em: ordemServico.criadoEm,
       atualizado_em: ordemServico.atualizadoEm,
@@ -221,12 +244,16 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     };
   }
 
-  app.get('/ordens-servico', { preHandler: authenticate }, async (request, reply) => {
+  app.get('/ordens-servico', equipeOperacional, async (request, reply) => {
     const query = listQuerySchema.parse(request.query);
+    const papel = request.user!.papel;
+    // Tecnico so pode listar as proprias OS — ignora tecnico_id vindo da
+    // query e forca o proprio id, para nao poder consultar a agenda de outro.
+    const tecnicoId = papel === 'tecnico' ? request.user!.id : query.tecnico_id;
 
     const resultado = await listarOrdensServicoUseCase.execute({
       status: query.status,
-      tecnicoId: query.tecnico_id,
+      tecnicoId,
       clienteId: query.cliente_id,
       page: query.page,
       pageSize: query.page_size,
@@ -237,7 +264,12 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     const nomeUsuarioPorId = new Map(usuarios.map((usuario) => [usuario.id, usuario.nome]));
 
     return reply.status(200).send({
-      data: montarOrdemServicoResponseEmLote(resultado.itens, nomeClientePorId, nomeUsuarioPorId),
+      data: montarOrdemServicoResponseEmLote(
+        resultado.itens,
+        nomeClientePorId,
+        nomeUsuarioPorId,
+        deveOcultarValor(papel),
+      ),
       page: query.page,
       page_size: query.page_size,
       total: resultado.total,
@@ -260,12 +292,14 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     return reply.status(201).send(await montarOrdemServicoResponse(ordemServico));
   });
 
-  app.get('/ordens-servico/:id', { preHandler: authenticate }, async (request, reply) => {
+  app.get('/ordens-servico/:id', equipeOperacional, async (request, reply) => {
     const { id } = idParamsSchema.parse(request.params);
+    const papel = request.user!.papel;
 
     try {
       const ordemServico = await buscarOrdemServicoUseCase.execute(id);
-      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico));
+      garantirAcessoTecnico(ordemServico, request.user!.id, papel);
+      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico, deveOcultarValor(papel)));
     } catch (error) {
       relancarComoAppError(error);
     }
@@ -289,11 +323,14 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     }
   });
 
-  app.patch('/ordens-servico/:id/status', { preHandler: authenticate }, async (request, reply) => {
+  app.patch('/ordens-servico/:id/status', equipeOperacional, async (request, reply) => {
     const { id } = idParamsSchema.parse(request.params);
     const body = atualizarStatusBodySchema.parse(request.body);
 
     try {
+      const ordemServicoAtual = await buscarOrdemServicoUseCase.execute(id);
+      garantirAcessoTecnico(ordemServicoAtual, request.user!.id, request.user!.papel);
+
       const ordemServico = await atualizarStatusOrdemServicoUseCase.execute({
         ordemServicoId: id,
         statusNovo: body.status,
@@ -301,7 +338,9 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
         usuarioId: request.user!.id,
         observacao: body.observacao,
       });
-      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico));
+      return reply
+        .status(200)
+        .send(await montarOrdemServicoResponse(ordemServico, deveOcultarValor(request.user!.papel)));
     } catch (error) {
       relancarComoAppError(error);
     }
@@ -386,11 +425,14 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     }
   });
 
-  app.get('/ordens-servico/:id/historico', { preHandler: authenticate }, async (request, reply) => {
+  app.get('/ordens-servico/:id/historico', equipeOperacional, async (request, reply) => {
     const { id } = idParamsSchema.parse(request.params);
     const query = historicoQuerySchema.parse(request.query);
 
     try {
+      const ordemServico = await buscarOrdemServicoUseCase.execute(id);
+      garantirAcessoTecnico(ordemServico, request.user!.id, request.user!.papel);
+
       const resultado = await listarHistoricoOSUseCase.execute({
         ordemServicoId: id,
         page: query.page,
