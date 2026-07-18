@@ -10,6 +10,7 @@ import { ListarOrdensServicoUseCase } from '../../application/ListarOrdensServic
 import { RegistrarValorOrdemServicoUseCase } from '../../application/RegistrarValorOrdemServicoUseCase';
 import { VerificarDisponibilidadeUseCase } from '../../application/VerificarDisponibilidadeUseCase';
 import { AjudanteIndisponivelError } from '../../domain/errors/AjudanteIndisponivelError';
+import { OrcamentoObrigatorioError } from '../../domain/errors/OrcamentoObrigatorioError';
 import { OrdemServicoConcorrenciaError } from '../../domain/errors/OrdemServicoConcorrenciaError';
 import { OrdemServicoNaoEncontradaError } from '../../domain/errors/OrdemServicoNaoEncontradaError';
 import { TecnicoIndisponivelError } from '../../domain/errors/TecnicoIndisponivelError';
@@ -61,6 +62,7 @@ const criarOrdemServicoBodySchema = z.object({
   descricao_problema: z.string().min(1),
   endereco_atendimento: z.string().optional(),
   prioridade: prioridadeSchema.optional(),
+  tipo_chamado: z.enum(['emergencia', 'servico']).optional(),
 });
 
 const atualizarOrdemServicoBodySchema = z.object({
@@ -93,6 +95,8 @@ export interface OrdensServicoRoutesDeps {
   clienteRepository: ClienteRepository;
   usuarioRepository: UsuarioRepository;
   checklistRepository: ChecklistRepository;
+  /** Checa se a OS tem orcamento aprovado (regra de emergencia). */
+  orcamentoAprovado?: (ordemServicoId: string) => Promise<boolean>;
 }
 
 /** Relanca erros de dominio conhecidos como AppError HTTP; demais erros seguem para o error-handler global. */
@@ -110,6 +114,9 @@ function relancarComoAppError(error: unknown): never {
     throw new ConflictError(error.message);
   }
   if (error instanceof OrdemServicoConcorrenciaError) {
+    throw new ConflictError(error.message);
+  }
+  if (error instanceof OrcamentoObrigatorioError) {
     throw new ConflictError(error.message);
   }
   throw error;
@@ -162,6 +169,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     historicoStatusOSRepository,
     eventBus,
     checklistRepository,
+    orcamentoAprovado: deps.orcamentoAprovado,
   });
   const verificarDisponibilidadeUseCase = new VerificarDisponibilidadeUseCase({ ordemServicoRepository });
   const atribuirTecnicoUseCase = new AtribuirTecnicoUseCase({
@@ -285,6 +293,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
       descricaoProblema: body.descricao_problema,
       enderecoAtendimento: body.endereco_atendimento,
       prioridade: body.prioridade,
+      tipoChamado: body.tipo_chamado,
       criadoPorUsuarioId: request.user!.id,
       criadoVia: 'painel',
     });

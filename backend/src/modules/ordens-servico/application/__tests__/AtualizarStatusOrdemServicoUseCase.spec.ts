@@ -105,4 +105,70 @@ describe('AtualizarStatusOrdemServicoUseCase', () => {
       }),
     ).rejects.toBeInstanceOf(OrdemServicoNaoEncontradaError);
   });
+
+  describe('regra de orcamento obrigatorio em emergencia', () => {
+    function criarUseCaseComOrcamento(aprovado: boolean) {
+      const ordemServicoRepository = new FakeOrdemServicoRepository();
+      const historicoStatusOSRepository = new FakeHistoricoStatusOSRepository();
+      const eventBus = new EventBus();
+      const useCase = new AtualizarStatusOrdemServicoUseCase({
+        ordemServicoRepository,
+        historicoStatusOSRepository,
+        eventBus,
+        orcamentoAprovado: async () => aprovado,
+      });
+      return { useCase, ordemServicoRepository };
+    }
+
+    it('bloqueia iniciar execucao de OS de emergencia sem orcamento aprovado', async () => {
+      const { useCase, ordemServicoRepository } = criarUseCaseComOrcamento(false);
+      ordemServicoRepository.seed(
+        criarOrdemServicoFake({ id: 'os-1', status: 'atribuida', tipoChamado: 'emergencia' }),
+      );
+
+      await expect(
+        useCase.execute({
+          ordemServicoId: 'os-1',
+          statusNovo: 'em_andamento',
+          papelUsuario: 'tecnico',
+          usuarioId: 'tecnico-1',
+        }),
+      ).rejects.toThrow();
+
+      const os = await ordemServicoRepository.findById('os-1');
+      expect(os?.status).toBe('atribuida');
+    });
+
+    it('permite iniciar execucao de OS de emergencia com orcamento aprovado', async () => {
+      const { useCase, ordemServicoRepository } = criarUseCaseComOrcamento(true);
+      ordemServicoRepository.seed(
+        criarOrdemServicoFake({ id: 'os-1', status: 'atribuida', tipoChamado: 'emergencia' }),
+      );
+
+      const atualizada = await useCase.execute({
+        ordemServicoId: 'os-1',
+        statusNovo: 'em_andamento',
+        papelUsuario: 'tecnico',
+        usuarioId: 'tecnico-1',
+      });
+
+      expect(atualizada.status).toBe('em_andamento');
+    });
+
+    it('nao aplica a regra para chamado de servico (sem orcamento aprovado)', async () => {
+      const { useCase, ordemServicoRepository } = criarUseCaseComOrcamento(false);
+      ordemServicoRepository.seed(
+        criarOrdemServicoFake({ id: 'os-1', status: 'atribuida', tipoChamado: 'servico' }),
+      );
+
+      const atualizada = await useCase.execute({
+        ordemServicoId: 'os-1',
+        statusNovo: 'em_andamento',
+        papelUsuario: 'tecnico',
+        usuarioId: 'tecnico-1',
+      });
+
+      expect(atualizada.status).toBe('em_andamento');
+    });
+  });
 });

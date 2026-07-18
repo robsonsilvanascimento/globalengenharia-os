@@ -99,12 +99,18 @@ async function buildServer() {
     ordemServicoRepository: container.ordensServico.ordemServicoRepository,
     categoriaServicoRepository: container.categoriasServico.categoriaServicoRepository,
   });
+  const orcamentoRepository = new PrismaOrcamentoOSRepository(container.prisma);
+
   registerOrdensServicoRoutes(app, {
     ...container.ordensServico,
     eventBus: container.eventBus,
     clienteRepository: container.clientes.clienteRepository,
     usuarioRepository: container.auth.usuarioRepository,
     checklistRepository: container.checklist.checklistRepository,
+    orcamentoAprovado: async (ordemServicoId) => {
+      const orcamento = await orcamentoRepository.buscarPorOrdemServico(ordemServicoId);
+      return orcamento?.status === 'aprovado';
+    },
   });
   registerAtendimentoHumanoRoutes(app, {
     ...container.atendimentoHumano,
@@ -140,8 +146,25 @@ async function buildServer() {
   });
 
   registerOrcamentoRoutes(app, {
-    orcamentoRepository: new PrismaOrcamentoOSRepository(container.prisma),
+    orcamentoRepository,
     ordemServicoRepository: container.ordensServico.ordemServicoRepository,
+    aoAprovarOrcamento: async (ordemServicoId) => {
+      // Avisa a equipe (admins/atendentes com app) que o cliente aprovou.
+      const os = await container.ordensServico.ordemServicoRepository.findById(ordemServicoId);
+      const equipe = await container.prisma.usuario.findMany({
+        where: { papel: { in: ['admin', 'atendente'] }, ativo: true, expoPushToken: { not: null } },
+        select: { expoPushToken: true },
+      });
+      for (const membro of equipe) {
+        if (!membro.expoPushToken) continue;
+        await enqueueExpoPush({
+          expoPushToken: membro.expoPushToken,
+          titulo: 'Orçamento aprovado',
+          corpo: `O cliente aprovou o orçamento da OS ${os?.numero ?? ordemServicoId}.`,
+          data: { tipo: 'orcamento_aprovado', ordemServicoId },
+        });
+      }
+    },
   });
 
   registerAssinaturaOSRoutes(app, { prisma: container.prisma });

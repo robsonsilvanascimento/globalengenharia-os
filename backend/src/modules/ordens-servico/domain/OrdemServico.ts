@@ -16,6 +16,12 @@ export type StatusOS =
 
 export type OrigemCriacaoOS = 'whatsapp' | 'painel';
 
+/**
+ * Tipo do chamado. Em `emergencia` o orcamento aprovado e obrigatorio antes
+ * de iniciar a execucao; em `servico` o atendente decide se envia orcamento.
+ */
+export type TipoChamado = 'emergencia' | 'servico';
+
 export interface OrdemServico {
   id: string;
   numero: string;
@@ -25,6 +31,7 @@ export interface OrdemServico {
   enderecoAtendimento?: string;
   prioridade: PrioridadeOS;
   status: StatusOS;
+  tipoChamado: TipoChamado;
   tecnicoId?: string;
   ajudanteId?: string;
   criadoPorUsuarioId?: string;

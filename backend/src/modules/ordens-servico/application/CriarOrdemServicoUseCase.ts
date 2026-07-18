@@ -1,6 +1,6 @@
 import type { EventBus } from '../../../shared/domain/EventBus';
 import { OS_CRIADA_EVENT, type OSCriada } from '../../../shared/domain/events/OSCriada';
-import type { OrdemServico, OrigemCriacaoOS, PrioridadeOS } from '../domain/OrdemServico';
+import type { OrdemServico, OrigemCriacaoOS, PrioridadeOS, TipoChamado } from '../domain/OrdemServico';
 import type { HistoricoStatusOSRepository } from '../domain/HistoricoStatusOSRepository';
 import type { NumeroOSGenerator } from '../domain/NumeroOSGenerator';
 import type { OrdemServicoRepository } from '../domain/OrdemServicoRepository';
@@ -11,6 +11,7 @@ export interface CriarOrdemServicoInput {
   descricaoProblema: string;
   enderecoAtendimento?: string;
   prioridade?: PrioridadeOS;
+  tipoChamado?: TipoChamado;
   /** Ausente/undefined quando a OS e criada automaticamente pelo bot do WhatsApp. */
   criadoPorUsuarioId?: string;
   criadoVia: OrigemCriacaoOS;
@@ -56,6 +57,7 @@ export class CriarOrdemServicoUseCase {
       enderecoAtendimento: input.enderecoAtendimento,
       prioridade: input.prioridade ?? 'normal',
       status: 'aberta',
+      tipoChamado: input.tipoChamado ?? 'servico',
       criadoPorUsuarioId: input.criadoPorUsuarioId,
       criadoVia: input.criadoVia,
       dataAgendada: input.dataAgendada,

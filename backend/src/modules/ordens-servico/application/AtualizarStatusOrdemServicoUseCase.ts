@@ -2,6 +2,7 @@ import type { EventBus } from '../../../shared/domain/EventBus';
 import { OS_STATUS_ALTERADO_EVENT, type OSStatusAlterado } from '../../../shared/domain/events/OSStatusAlterado';
 import { ValidarChecklistCompletoUseCase } from '../../checklist/application/ValidarChecklistCompletoUseCase';
 import type { ChecklistRepository } from '../../checklist/domain/ChecklistRepository';
+import { OrcamentoObrigatorioError } from '../domain/errors/OrcamentoObrigatorioError';
 import { OrdemServicoConcorrenciaError } from '../domain/errors/OrdemServicoConcorrenciaError';
 import { OrdemServicoNaoEncontradaError } from '../domain/errors/OrdemServicoNaoEncontradaError';
 import { TransicaoInvalidaError } from '../domain/errors/TransicaoInvalidaError';
@@ -23,6 +24,13 @@ export interface AtualizarStatusOrdemServicoDeps {
   historicoStatusOSRepository: HistoricoStatusOSRepository;
   eventBus: EventBus;
   checklistRepository?: ChecklistRepository;
+  /**
+   * Indica se a OS tem um orcamento aprovado pelo cliente. Usado para barrar
+   * o inicio da execucao (`em_andamento`) de chamados de emergencia sem
+   * orcamento aprovado. Opcional: quando ausente, a regra nao e aplicada
+   * (ex.: call sites/testes que nao envolvem orcamento).
+   */
+  orcamentoAprovado?: (ordemServicoId: string) => Promise<boolean>;
 }
 
 const STATUS_QUE_FECHAM_OS: readonly StatusOS[] = ['concluida', 'cancelada'];
@@ -52,6 +60,18 @@ export class AtualizarStatusOrdemServicoUseCase {
 
     if (!podeTransicionar(statusAnterior, input.statusNovo, input.papelUsuario)) {
       throw new TransicaoInvalidaError(statusAnterior, input.statusNovo, input.papelUsuario);
+    }
+
+    // Chamado de emergencia so entra em execucao com orcamento aprovado.
+    if (
+      input.statusNovo === 'em_andamento' &&
+      ordemServico.tipoChamado === 'emergencia' &&
+      this.deps.orcamentoAprovado
+    ) {
+      const aprovado = await this.deps.orcamentoAprovado(input.ordemServicoId);
+      if (!aprovado) {
+        throw new OrcamentoObrigatorioError(input.ordemServicoId);
+      }
     }
 
     if (input.statusNovo === 'concluida' && this.deps.checklistRepository) {

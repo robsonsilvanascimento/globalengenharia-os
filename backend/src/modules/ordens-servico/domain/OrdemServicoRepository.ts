@@ -1,4 +1,4 @@
-import type { OrdemServico, OrigemCriacaoOS, PrioridadeOS, StatusOS } from './OrdemServico';
+import type { OrdemServico, OrigemCriacaoOS, PrioridadeOS, StatusOS, TipoChamado } from './OrdemServico';
 
 export interface OrdemServicoCompleta {
   id: string;
@@ -50,6 +50,7 @@ export interface CriarOrdemServicoDados {
   enderecoAtendimento?: string;
   prioridade: PrioridadeOS;
   status: StatusOS;
+  tipoChamado?: TipoChamado;
   criadoPorUsuarioId?: string;
   criadoVia: OrigemCriacaoOS;
   dataAgendada?: Date;
