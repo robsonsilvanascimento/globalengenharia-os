@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authenticate, requireRole } from '../../../../shared/http/middlewares/auth';
+import { NotFoundError } from '../../../../shared/http/errors/AppError';
+import { gerarOrcamentoPdf } from '../../../../shared/infra/pdf/GerarOrcamentoService';
 import type { OrdemServicoRepository } from '../../../ordens-servico/domain/OrdemServicoRepository';
 import type { OrcamentoOSRepository } from '../../domain/OrcamentoOSRepository';
 import { CriarOrcamentoUseCase } from '../../application/CriarOrcamentoUseCase';
@@ -49,5 +51,28 @@ export function registerOrcamentoRoutes(app: FastifyInstance, deps: OrcamentoRou
     const { id } = osIdParams.parse(request.params);
     const orcamento = await obterOrcamentoUseCase.execute(id);
     return reply.status(200).send(orcamento);
+  });
+
+  // PDF da proposta, para download/visualizacao pela equipe.
+  app.get('/ordens-servico/:id/orcamento/pdf', atendenteOuAdmin, async (request, reply) => {
+    const { id } = osIdParams.parse(request.params);
+    const orcamento = await obterOrcamentoUseCase.execute(id);
+    const os = await deps.ordemServicoRepository.findByIdCompleto(id);
+    if (!os) throw new NotFoundError('Ordem de servico nao encontrada');
+
+    const pdf = await gerarOrcamentoPdf({
+      numeroOS: os.numero,
+      clienteNome: os.cliente.nome,
+      emitidoEm: orcamento.criadoEm,
+      itens: orcamento.itens,
+      valorTotal: orcamento.valorTotal,
+      observacao: orcamento.observacao,
+    });
+
+    return reply
+      .status(200)
+      .header('Content-Type', 'application/pdf')
+      .header('Content-Disposition', `inline; filename="orcamento-${os.numero}.pdf"`)
+      .send(pdf);
   });
 }
