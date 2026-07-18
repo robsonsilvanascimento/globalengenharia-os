@@ -8,7 +8,6 @@ export interface DadosReciboPagamento {
   valor: number;
   tipoPagamento: 'pix_automatico' | 'manual';
   pagoEm: Date;
-  observacao?: string;
 }
 
 const NOME_EMPRESA = 'Global Engenharia';
@@ -110,9 +109,6 @@ export async function gerarReciboPagamento(dados: DadosReciboPagamento): Promise
       doc.text(`Valor pago: ${formatarValor(dados.valor)}`);
       doc.text(`Forma de pagamento: ${LABEL_TIPO_PAGAMENTO[dados.tipoPagamento]}`);
       doc.text(`Data do pagamento: ${formatarData(dados.pagoEm)}`);
-      if (dados.observacao) {
-        doc.text(`Observacao: ${dados.observacao}`);
-      }
       doc.moveDown(2);
 
       doc

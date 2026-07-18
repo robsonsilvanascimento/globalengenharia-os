@@ -47,7 +47,14 @@ function verifySignature(
     .update(manifest)
     .digest('hex');
 
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1));
+  const bufferEsperado = Buffer.from(expected);
+  const bufferRecebido = Buffer.from(v1);
+
+  if (bufferRecebido.length !== bufferEsperado.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufferRecebido, bufferEsperado);
 }
 
 export function registerWebhookMercadoPagoRoutes(

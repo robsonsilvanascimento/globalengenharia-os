@@ -52,7 +52,6 @@ export async function processarEntregaReciboJob(job: Job<EntregaReciboJobData>):
     valor: pagamentoOS.valor,
     tipoPagamento: pagamentoOS.tipo,
     pagoEm: pagamentoOS.pagoEm ?? new Date(),
-    observacao: pagamentoOS.observacao ?? undefined,
   });
 
   const resultado = await enviarDocumento(
