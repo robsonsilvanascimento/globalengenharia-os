@@ -1,5 +1,21 @@
-import path from 'node:path';
 import PDFDocument from 'pdfkit';
+import {
+  area,
+  barraTopo,
+  blocoDestacado,
+  cabecalho,
+  campo,
+  corDePrioridade,
+  corDeStatus,
+  CORES,
+  divisoria,
+  NOME_EMPRESA,
+  PRIORIDADE_ROTULO,
+  rodape,
+  selo,
+  STATUS_ROTULO,
+  tituloSecao,
+} from './pdf-layout';
 
 export interface DadosPdfOrdemServico {
   numero: string;
@@ -23,19 +39,6 @@ export interface OpcoesPdfOrdemServico {
   caminhoLogo?: string;
 }
 
-const NOME_EMPRESA = 'Global Engenharia';
-const LARGURA_LOGO = 160;
-
-// __dirname aqui aponta para src/shared/infra/pdf (em dev, via tsx/ts-node) ou
-// dist/shared/infra/pdf (em producao, apos `npm run build`). Como o `tsc`
-// espelha exatamente a estrutura de pastas de `src` dentro de `dist`
-// (rootDir: src, outDir: dist), a profundidade de diretorios e identica nos
-// dois casos. Por isso, subir 4 niveis a partir de __dirname sempre leva a
-// raiz do pacote backend/, onde vive a pasta assets/ (irma de src/ e dist/).
-function resolverCaminhoPadraoDoLogo(): string {
-  return path.join(__dirname, '..', '..', '..', '..', 'assets', 'brand', 'logo.png');
-}
-
 function formatarData(data: Date): string {
   return data.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -46,6 +49,14 @@ function formatarData(data: Date): string {
   });
 }
 
+/**
+ * Gera o PDF da Ordem de Servico entregue ao cliente via WhatsApp na abertura
+ * da OS. Layout com a identidade visual da Global Engenharia (ver
+ * `pdf-layout.ts`): faixa e logo no topo, numero da OS em cartao destacado,
+ * status e prioridade em selos coloridos, e a descricao do problema em bloco
+ * destacado. O numero ja vem no formato `OS-AAAA-NNNNNN`, entao o cabecalho
+ * usa "Ordem de Servico Nº" sem repetir o prefixo "OS".
+ */
 export async function gerarPdfOrdemServico(
   dados: DadosPdfOrdemServico,
   opcoes?: OpcoesPdfOrdemServico,
@@ -55,91 +66,78 @@ export async function gerarPdfOrdemServico(
       const doc = new PDFDocument({ size: 'A4', margin: 50 });
       const chunks: Buffer[] = [];
 
-      doc.on('data', (chunk: Buffer) => {
-        chunks.push(chunk);
-      });
-      doc.on('end', () => {
-        resolve(Buffer.concat(chunks));
-      });
-      doc.on('error', (err: Error) => {
-        reject(err);
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', (err: Error) => reject(err));
+
+      const { esquerda, largura } = area(doc);
+      const larguraColuna = (largura - 20) / 2;
+      const xColunaDireita = esquerda + larguraColuna + 20;
+
+      barraTopo(doc);
+
+      let y = cabecalho(doc, {
+        rotuloNumero: 'Ordem de Serviço Nº',
+        numero: dados.numero,
+        caminhoLogo: opcoes?.caminhoLogo,
       });
 
-      // Cabecalho: tenta inserir o logo da empresa; se o arquivo nao existir
-      // ou a imagem nao puder ser lida, cai no cabecalho apenas em texto.
-      const caminhoLogo = opcoes?.caminhoLogo ?? resolverCaminhoPadraoDoLogo();
-      let logoInserido = false;
-      try {
-        // `doc.image()` NAO avanca `doc.y` sozinho quando informado sem x/y
-        // (ao contrario de `doc.text()`). Por isso abrimos a imagem primeiro
-        // (`openImage`) para calcular a altura proporcional a partir da
-        // largura fixa e avancamos o cursor manualmente apos desenha-la —
-        // sem isso, o texto seguinte era desenhado por cima do logo.
-        // `openImage` existe em tempo de execucao no pdfkit mas nao esta
-        // declarado em `@types/pdfkit`; cast pontual e documentado.
-        const abrirImagem = (doc as unknown as {
-          openImage: (src: string) => { width: number; height: number };
-        }).openImage.bind(doc);
-        const imagemLogo = abrirImagem(caminhoLogo);
-        const alturaLogo = (LARGURA_LOGO / imagemLogo.width) * imagemLogo.height;
-        const xLogo = doc.x;
-        const yLogo = doc.y;
-        doc.image(caminhoLogo, xLogo, yLogo, { width: LARGURA_LOGO });
-        doc.y = yLogo + alturaLogo;
-        logoInserido = true;
-      } catch {
-        logoInserido = false;
-      }
+      // Linha de status/prioridade (selos coloridos) + data de abertura a direita.
+      const rotuloStatus = STATUS_ROTULO[dados.status] ?? dados.status;
+      const corStatus = corDeStatus(dados.status);
+      const larguraSeloStatus = selo(doc, esquerda, y, rotuloStatus, corStatus.fundo, corStatus.texto);
 
-      if (logoInserido) {
-        doc.moveDown(0.5);
-      } else {
-        doc.fontSize(18).font('Helvetica-Bold').text('Ordem de Servico', { align: 'left' });
-      }
-      doc.fontSize(11).font('Helvetica').text(NOME_EMPRESA, { align: 'left' });
-      doc.moveDown(1);
+      const corPrioridade = corDePrioridade(dados.prioridade);
+      const rotuloPrioridade = `Prioridade ${PRIORIDADE_ROTULO[dados.prioridade] ?? dados.prioridade}`;
+      selo(doc, esquerda + larguraSeloStatus + 8, y, rotuloPrioridade, corPrioridade.fundo, corPrioridade.texto);
 
-      // Numero da OS e data de abertura
-      doc.fontSize(14).font('Helvetica-Bold').text(`OS #${dados.numero}`);
       doc
-        .fontSize(10)
+        .fillColor(CORES.tintaFraca)
         .font('Helvetica')
-        .text(`Data de abertura: ${formatarData(dados.criadoEm)}`);
-      doc.moveDown(1);
+        .fontSize(9)
+        .text(`Aberta em ${formatarData(dados.criadoEm)}`, esquerda, y + 4, { width: largura, align: 'right' });
+
+      y = divisoria(doc, y + 34) + 18;
 
       // Dados do Cliente
-      doc.fontSize(12).font('Helvetica-Bold').text('Dados do Cliente');
-      doc.moveDown(0.3);
-      doc.fontSize(10).font('Helvetica');
-      doc.text(`Nome: ${dados.clienteNome}`);
-      doc.text(`Telefone: ${dados.clienteTelefone}`);
+      y = tituloSecao(doc, y, 'Dados do Cliente');
+      const alturaNome = campo(doc, esquerda, y, larguraColuna, 'Nome', dados.clienteNome);
+      const alturaTelefone = campo(doc, xColunaDireita, y, larguraColuna, 'Telefone', dados.clienteTelefone);
+      y += Math.max(alturaNome, alturaTelefone) + 12;
       if (dados.clienteEmail) {
-        doc.text(`E-mail: ${dados.clienteEmail}`);
+        y += campo(doc, esquerda, y, largura, 'E-mail', dados.clienteEmail) + 4;
       }
-      doc.moveDown(1);
 
       // Servico Solicitado
-      doc.fontSize(12).font('Helvetica-Bold').text('Servico Solicitado');
-      doc.moveDown(0.3);
-      doc.fontSize(10).font('Helvetica');
-      doc.text(`Categoria: ${dados.categoriaNome}`);
-      doc.text(`Prioridade: ${dados.prioridade}`);
-      if (dados.enderecoAtendimento) {
-        doc.text(`Endereco de atendimento: ${dados.enderecoAtendimento}`);
-      }
-      doc.moveDown(0.3);
-      doc.font('Helvetica-Bold').text('Descricao do problema:');
-      doc.font('Helvetica').text(dados.descricaoProblema);
-      doc.moveDown(2);
-
-      // Rodape
+      y = tituloSecao(doc, y + 12, 'Serviço Solicitado');
+      const alturaCategoria = campo(doc, esquerda, y, larguraColuna, 'Categoria', dados.categoriaNome);
+      // Prioridade renderizada como selo colorido (em vez de texto simples).
       doc
-        .fontSize(9)
-        .font('Helvetica-Oblique')
-        .text('Documento gerado automaticamente pelo sistema — via WhatsApp', {
-          align: 'center',
-        });
-      doc.text(`Status atual da OS: ${dados.status}`, { align: 'center' });
+        .fillColor(CORES.tintaFraca)
+        .font('Helvetica')
+        .fontSize(8)
+        .text('PRIORIDADE', xColunaDireita, y, { width: larguraColuna });
+      selo(
+        doc,
+        xColunaDireita,
+        y + 11,
+        PRIORIDADE_ROTULO[dados.prioridade] ?? dados.prioridade,
+        corPrioridade.fundo,
+        corPrioridade.texto,
+      );
+      y += Math.max(alturaCategoria, 11 + 16) + 12;
+
+      if (dados.enderecoAtendimento) {
+        y += campo(doc, esquerda, y, largura, 'Endereço de atendimento', dados.enderecoAtendimento) + 10;
+      }
+
+      y = blocoDestacado(doc, y, 'Descrição do problema', dados.descricaoProblema);
+
+      rodape(doc, y + 6, [
+        { texto: NOME_EMPRESA, tipo: 'forte' },
+        { texto: 'Documento gerado automaticamente pelo sistema — via WhatsApp', tipo: 'italico' },
+        { texto: `Status atual: ${rotuloStatus}`, tipo: 'normal' },
+      ]);
 
       doc.end();
     } catch (err) {
