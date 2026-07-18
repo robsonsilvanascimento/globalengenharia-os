@@ -1,6 +1,10 @@
 import type { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
-import type { AdicionarFotoServicoInput, FotoServicoRealizado } from '../domain/FotoServicoRealizado';
+import type {
+  AdicionarFotoServicoInput,
+  FotoServicoRealizado,
+  MomentoFoto,
+} from '../domain/FotoServicoRealizado';
 import type { FotoServicoRepository } from '../domain/FotoServicoRepository';
 
 type FotoRow = {
@@ -9,6 +13,7 @@ type FotoRow = {
   mimeType: string;
   base64: string;
   legenda: string | null;
+  momento: string | null;
   enviadoPorId: string | null;
   criadoEm: Date;
   enviadoPor: { nome: string } | null;
@@ -25,6 +30,7 @@ export class PrismaFotoServicoRepository implements FotoServicoRepository {
         mimeType: input.mimeType,
         base64: input.base64,
         legenda: input.legenda ?? null,
+        momento: input.momento ?? null,
         enviadoPorId: input.enviadoPorId ?? null,
       },
       include: {
@@ -52,6 +58,7 @@ export class PrismaFotoServicoRepository implements FotoServicoRepository {
       mimeType: row.mimeType,
       base64: row.base64,
       legenda: row.legenda,
+      momento: row.momento === 'antes' || row.momento === 'depois' ? (row.momento as MomentoFoto) : null,
       enviadoPorId: row.enviadoPorId,
       enviadoPorNome: row.enviadoPor?.nome ?? null,
       criadoEm: row.criadoEm,

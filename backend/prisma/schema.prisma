@@ -613,6 +613,9 @@ model FotoServicoRealizado {
   mimeType       String   @map("mime_type")
   base64         String   @db.Text
   legenda        String?
+  // "antes" | "depois" — usado no relatorio fotografico comparativo.
+  // Nulo em fotos antigas (anteriores a este campo), tratadas como "depois".
+  momento        String?
   enviadoPorId   String?  @map("enviado_por_id")
   criadoEm       DateTime @default(now()) @map("criado_em")
 
