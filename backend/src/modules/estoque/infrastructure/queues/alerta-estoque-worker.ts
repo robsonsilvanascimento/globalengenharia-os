@@ -2,37 +2,65 @@ import { Worker } from 'bullmq';
 import { prisma } from '../../../../shared/infra/PrismaClient';
 import { redisConnection } from '../../../../shared/infra/RedisConnection';
 import { logger } from '../../../../shared/infra/Logger';
-import { enqueueNotificacaoWhatsapp } from '../../../../shared/infra/queues';
+import { enqueueExpoPush } from '../../../notificacoes/infrastructure/queues/expo-push-queue';
 import type { AlertaEstoqueJobData } from './alerta-estoque-queue';
 
-export const alertaEstoqueWorker = new Worker<AlertaEstoqueJobData>(
-  'alerta-estoque',
-  async (job) => {
-    const { pecaId, estoqueAtual, estoqueMinimo } = job.data;
+/**
+ * Processa o alerta de estoque baixo de uma peca: reconfere no banco que ela
+ * ainda esta no/abaixo do minimo (pode ter sido reposta entre o gatilho e o
+ * processamento) e, se estiver, notifica todos os administradores ativos que
+ * tenham o app instalado (expoPushToken) via push. Notificacao interna a
+ * equipe usa push — nao WhatsApp — para nao esbarrar na janela de 24h / na
+ * necessidade de template aprovado da Meta.
+ */
+export async function processarAlertaEstoque(pecaId: string): Promise<void> {
+  const peca = await prisma.peca.findUnique({ where: { id: pecaId } });
+  if (!peca || !peca.ativo) return;
+  if (peca.estoqueAtual > peca.estoqueMinimo) return;
 
-    const peca = await prisma.peca.findUnique({ where: { id: pecaId } });
-    if (!peca) return;
+  const admins = await prisma.usuario.findMany({
+    where: { papel: 'admin', ativo: true, expoPushToken: { not: null } },
+    select: { id: true, expoPushToken: true },
+  });
 
-    if (peca.estoqueAtual > estoqueMinimo) return;
+  const titulo = 'Estoque baixo';
+  const corpo = `${peca.nome} (${peca.codigo}): ${peca.estoqueAtual} ${peca.unidade} em estoque (mínimo ${peca.estoqueMinimo}). Repor.`;
 
-    const admin = await prisma.usuario.findFirst({
-      where: { papel: 'admin', ativo: true },
+  for (const admin of admins) {
+    if (!admin.expoPushToken) continue;
+    await enqueueExpoPush({
+      expoPushToken: admin.expoPushToken,
+      titulo,
+      corpo,
+      data: { tipo: 'alerta_estoque', pecaId: peca.id },
     });
-    if (!admin) return;
+  }
 
-    const mensagem = `⚠️ Estoque baixo: ${peca.nome} (${peca.codigo}) — ${estoqueAtual} ${peca.unidade} em estoque (mínimo: ${estoqueMinimo})`;
+  logger.info(
+    {
+      pecaId,
+      estoqueAtual: peca.estoqueAtual,
+      estoqueMinimo: peca.estoqueMinimo,
+      adminsNotificados: admins.length,
+    },
+    'Alerta de estoque baixo processado',
+  );
+}
 
-    await enqueueNotificacaoWhatsapp({
-      ordemServicoId: '',
-      clienteId: admin.id,
-      statusNovo: 'alerta_estoque',
-      templateNome: mensagem,
-    });
+/** Cria o Worker BullMQ que consome a fila `alerta-estoque`. */
+export function createAlertaEstoqueWorker(): Worker<AlertaEstoqueJobData> {
+  const worker = new Worker<AlertaEstoqueJobData>(
+    'alerta-estoque',
+    (job) => processarAlertaEstoque(job.data.pecaId),
+    {
+      connection: redisConnection,
+      concurrency: 1,
+    },
+  );
 
-    logger.info({ pecaId, estoqueAtual, estoqueMinimo }, 'Alerta de estoque enfileirado');
-  },
-  {
-    connection: redisConnection,
-    concurrency: 1,
-  },
-);
+  worker.on('error', (err) => {
+    logger.error({ err }, 'Erro no worker da fila alerta-estoque');
+  });
+
+  return worker;
+}

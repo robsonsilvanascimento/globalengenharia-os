@@ -34,6 +34,7 @@ import { ArmazenamentoLocalService } from '../shared/infra/storage/Armazenamento
 import { createComissaoWorker } from '../modules/pagamento/infrastructure/queues/comissao-worker';
 import { createPixWhatsappWorker } from '../modules/pagamento/infrastructure/queues/pix-whatsapp-worker';
 import { createEntregaReciboWorker } from '../modules/pagamento/infrastructure/queues/entrega-recibo-worker';
+import { createAlertaEstoqueWorker } from '../modules/estoque/infrastructure/queues/alerta-estoque-worker';
 
 /**
  * Processo separado, dedicado a consumir as filas do BullMQ (ex.: envio de
@@ -118,6 +119,16 @@ function start(): void {
     logger.error({ jobId: job?.id, err }, 'Job da fila entrega-recibo falhou');
   });
 
+  const alertaEstoqueWorker = createAlertaEstoqueWorker();
+
+  alertaEstoqueWorker.on('completed', (job) => {
+    logger.info({ jobId: job.id }, 'Job da fila alerta-estoque concluido');
+  });
+
+  alertaEstoqueWorker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'Job da fila alerta-estoque falhou');
+  });
+
   // O EventBus e in-process (EventEmitter): cada processo Node tem sua propria
   // instancia do singleton `eventBus`. Por isso o listener de OSCriada precisa
   // ser registrado tambem AQUI (alem do processo HTTP em server.ts), para que
@@ -186,7 +197,7 @@ function start(): void {
   });
 
   logger.info(
-    'Worker de filas iniciado (notificacoes-whatsapp, whatsapp-conversa, entrega-pdf-os, notificacao-tecnico, calcular-comissao, pix-whatsapp, entrega-recibo)',
+    'Worker de filas iniciado (notificacoes-whatsapp, whatsapp-conversa, entrega-pdf-os, notificacao-tecnico, calcular-comissao, pix-whatsapp, entrega-recibo, alerta-estoque)',
   );
 }
 

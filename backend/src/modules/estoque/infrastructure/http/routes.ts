@@ -3,6 +3,7 @@ import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { authenticate, requireRole } from '../../../../shared/http/middlewares/auth';
 import { ConflictError, NotFoundError, ValidationError } from '../../../../shared/http/errors/AppError';
+import { enqueueAlertaEstoque } from '../queues/alerta-estoque-queue';
 
 const pecaIdParams = z.object({
   id: z.string().uuid(),
@@ -112,6 +113,21 @@ export function registerEstoqueRoutes(app: FastifyInstance, { prisma }: EstoqueR
     });
 
     return reply.status(200).send(pecas);
+  });
+
+  // Pecas ativas no/abaixo do estoque minimo — usado pelo painel para
+  // mostrar o que precisa ser reposto. Declarado ANTES de '/pecas/:id' para
+  // que "alertas" nao seja interpretado como um id.
+  app.get('/pecas/alertas', adminOuTecnico, async (_request, reply) => {
+    // O Prisma nao compara duas colunas da mesma linha diretamente no `where`;
+    // busca as ativas e filtra em memoria (o volume de pecas cadastradas e
+    // pequeno). Ordena das mais criticas (menor saldo relativo ao minimo).
+    const ativas = await prisma.peca.findMany({ where: { ativo: true }, orderBy: { nome: 'asc' } });
+    const abaixoDoMinimo = ativas
+      .filter((peca) => peca.estoqueAtual <= peca.estoqueMinimo)
+      .sort((a, b) => a.estoqueAtual - a.estoqueMinimo - (b.estoqueAtual - b.estoqueMinimo));
+
+    return reply.status(200).send(abaixoDoMinimo);
   });
 
   app.get('/pecas/:id', adminOuTecnico, async (request, reply) => {
@@ -252,6 +268,18 @@ export function registerEstoqueRoutes(app: FastifyInstance, { prisma }: EstoqueR
       });
       return mov;
     });
+
+    // Alerta so quando o ajuste CRUZA o limiar (estava acima do minimo e
+    // ficou no/abaixo dele), mesmo criterio do consumo de pecas.
+    const estoqueMinimo = Number(existente.estoqueMinimo);
+    const cruzouLimiar = estoqueAtual > estoqueMinimo && body.novoEstoque <= estoqueMinimo;
+    if (cruzouLimiar) {
+      await enqueueAlertaEstoque({
+        pecaId: id,
+        estoqueAtual: body.novoEstoque,
+        estoqueMinimo,
+      });
+    }
 
     return reply.status(201).send(movimentacao);
   });

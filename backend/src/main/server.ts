@@ -58,7 +58,6 @@ import { registerFinanceiroRoutes } from '../modules/financeiro/infrastructure/h
 import { alertaInadimplenciaQueue, agendarAlertaInadimplencia } from '../modules/financeiro/infrastructure/queues/inadimplencia-worker';
 import { registerEstoqueRoutes } from '../modules/estoque/infrastructure/http/routes';
 import { registerConsumoPecasRoutes } from '../modules/estoque/infrastructure/http/consumo-routes';
-import '../modules/estoque/infrastructure/queues/alerta-estoque-worker';
 import { registerManutencaoPreventivaRoutes } from '../modules/manutencao-preventiva/infrastructure/http/routes';
 import { agendarAlertaManutencao } from '../modules/manutencao-preventiva/infrastructure/queues/manutencao-worker';
 import { registerApiPublicaRoutes } from '../modules/api-publica/infrastructure/http/public-api-routes';

@@ -85,8 +85,13 @@ export function registerConsumoPecasRoutes(
         return novoConsumo;
       });
 
+      // Alerta so quando o consumo CRUZA o limiar (estava acima do minimo e
+      // ficou no/abaixo dele) — evita disparar um alerta a cada consumo
+      // enquanto a peca ja esta em falta.
       const estoqueAposConsumo = peca.estoqueAtual - body.quantidade;
-      if (estoqueAposConsumo <= peca.estoqueMinimo) {
+      const cruzouLimiar =
+        peca.estoqueAtual > peca.estoqueMinimo && estoqueAposConsumo <= peca.estoqueMinimo;
+      if (cruzouLimiar) {
         await enqueueAlertaEstoque({
           pecaId: peca.id,
           estoqueAtual: estoqueAposConsumo,
