@@ -309,6 +309,31 @@ model OrcamentoOS {
   @@map("orcamentos_os")
 }
 
+// Biblioteca de trechos/clausulas-modelo usados na montagem de laudos
+// tecnicos. Cada trecho e uma redacao propria (nao copia do texto oficial da
+// ABNT) que referencia a norma e o item aplicavel. `norma` (ex.: "NBR 5410"),
+// `item` (ex.: "5.1.3.2.2", opcional), `categoria` (agrupa por tipo de laudo:
+// baixa_tensao, spda, fotovoltaico, recarga_veicular, incendio, seguranca) e
+// `assunto` (tema curto). `itemVerificar` sinaliza que o numero do item ainda
+// precisa ser confirmado contra a edicao vigente da norma.
+model TrechoNormativo {
+  id            String   @id @default(uuid())
+  norma         String
+  item          String?
+  categoria     String
+  assunto       String
+  texto         String   @db.Text
+  itemVerificar Boolean  @default(false) @map("item_verificar")
+  ativo         Boolean  @default(true)
+  criadoPorId   String?  @map("criado_por_id")
+  criadoEm      DateTime @default(now()) @map("criado_em")
+  atualizadoEm  DateTime @updatedAt @map("atualizado_em")
+
+  @@index([categoria])
+  @@index([norma])
+  @@map("trechos_normativos")
+}
+
 model HistoricoStatusOS {
   id                    String    @id @default(uuid())
   ordemServicoId        String    @map("ordem_servico_id")
