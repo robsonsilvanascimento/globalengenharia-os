@@ -19,6 +19,8 @@ import { registerRelatorioTecnicoRoutes } from '../modules/relatorio-tecnico/inf
 import { registerPendenciasRoutes } from '../modules/pendencias/infrastructure/http/routes';
 import { registerChecklistRoutes } from '../modules/checklist/infrastructure/http/routes';
 import { registerFotosServicoRoutes } from '../modules/fotos-servico/infrastructure/http/routes';
+import { registerOrcamentoRoutes } from '../modules/orcamento/infrastructure/http/routes';
+import { PrismaOrcamentoOSRepository } from '../modules/orcamento/infrastructure/PrismaOrcamentoOSRepository';
 import { registerSlaRoutes } from '../modules/sla/infrastructure/http/routes';
 import { slaVerificacaoQueue } from '../modules/sla/infrastructure/queues/sla-queue';
 import { agendarVerificacaoSla } from '../modules/sla/infrastructure/queues/agendar-sla';
@@ -134,6 +136,11 @@ async function buildServer() {
   });
   registerFotosServicoRoutes(app, {
     fotoServicoRepository: container.fotosServico.fotoServicoRepository,
+    ordemServicoRepository: container.ordensServico.ordemServicoRepository,
+  });
+
+  registerOrcamentoRoutes(app, {
+    orcamentoRepository: new PrismaOrcamentoOSRepository(container.prisma),
     ordemServicoRepository: container.ordensServico.ordemServicoRepository,
   });
 

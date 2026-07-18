@@ -156,6 +156,7 @@ model Usuario {
   pagamentosCriados      PagamentoOS[]          @relation("pagamentos_criados")
   comissoes              ComissaoTecnico[]      @relation("comissoes_tecnico")
   movimentacoesCriadas   MovimentacaoEstoque[]  @relation("movimentacoes_criadas")
+  orcamentosCriados      OrcamentoOS[]          @relation("orcamentos_criados")
   apiKeys                ApiKey[]
 
   @@index([resetSenhaTokenHash])
@@ -206,6 +207,9 @@ model OrdemServico {
   // Quando o lembrete de agendamento (24h antes) foi enviado ao cliente.
   // Nulo = ainda nao enviado. Garante que o lembrete saia uma unica vez.
   lembreteAgendamentoEnviadoEm DateTime? @map("lembrete_agendamento_enviado_em")
+  // "emergencia" | "servico" — em emergencia o orcamento aprovado e
+  // obrigatorio antes de executar; em servico o atendente decide se envia.
+  tipoChamado           String       @default("servico") @map("tipo_chamado")
   valorCobrado          Decimal?     @db.Decimal(10, 2) @map("valor_cobrado")
   isPendente            Boolean      @default(false) @map("is_pendente")
   slaVencido            Boolean      @default(false) @map("sla_vencido")
@@ -224,6 +228,7 @@ model OrdemServico {
   notificacoesEnviadas NotificacaoEnviada[]
   midiasOrdemServico MidiaOrdemServico[]
   estimativaCusto    EstimativaCustoOS?
+  orcamento          OrcamentoOS?
   componentesInstalados ComponenteInstalado[]
   documentos         DocumentoOS[]
   pendencias         PendenciaOS[]
@@ -276,6 +281,32 @@ model EstimativaCustoOS {
   criadoPorUsuario Usuario      @relation(fields: [criadoPorUsuarioId], references: [id])
 
   @@map("estimativas_custo_os")
+}
+
+// Orcamento (proposta de preco) enviado ao cliente para aprovacao. Relacao
+// 1:1 com OrdemServico (um orcamento ativo por OS). Os itens detalhados
+// (mao de obra, deslocamento, materiais, etc.) ficam em `itens` como JSON:
+// [{ descricao: string, valor: number }]. O `status` e "pendente" |
+// "aprovado" | "recusado" (String, validada na aplicacao). O `tokenAprovacao`
+// e o segredo usado no link do portal para o cliente aprovar/recusar sem login.
+model OrcamentoOS {
+  id             String    @id @default(uuid())
+  ordemServicoId String    @unique @map("ordem_servico_id")
+  status         String    @default("pendente")
+  valorTotal     Decimal   @db.Decimal(10, 2) @map("valor_total")
+  itens          Json
+  observacao     String?   @db.Text
+  tokenAprovacao String    @unique @map("token_aprovacao")
+  enviadoEm      DateTime? @map("enviado_em")
+  respondidoEm   DateTime? @map("respondido_em")
+  criadoPorId    String    @map("criado_por_id")
+  criadoEm       DateTime  @default(now()) @map("criado_em")
+  atualizadoEm   DateTime  @updatedAt @map("atualizado_em")
+
+  ordemServico OrdemServico @relation(fields: [ordemServicoId], references: [id])
+  criadoPor    Usuario      @relation("orcamentos_criados", fields: [criadoPorId], references: [id])
+
+  @@map("orcamentos_os")
 }
 
 model HistoricoStatusOS {
