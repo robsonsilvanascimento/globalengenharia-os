@@ -60,6 +60,11 @@ import { registerEstoqueRoutes } from '../modules/estoque/infrastructure/http/ro
 import { registerConsumoPecasRoutes } from '../modules/estoque/infrastructure/http/consumo-routes';
 import { registerManutencaoPreventivaRoutes } from '../modules/manutencao-preventiva/infrastructure/http/routes';
 import { agendarAlertaManutencao } from '../modules/manutencao-preventiva/infrastructure/queues/manutencao-worker';
+import {
+  agendarLembreteAgendamento,
+  lembreteAgendamentoQueue,
+  lembreteAgendamentoWorker,
+} from '../modules/ordens-servico/infrastructure/queues/lembrete-agendamento-worker';
 import { registerApiPublicaRoutes } from '../modules/api-publica/infrastructure/http/public-api-routes';
 import { registerRelatoriosExcelRoutes } from '../modules/relatorios-excel/infrastructure/http/routes';
 import { Queue } from 'bullmq';
@@ -169,6 +174,8 @@ async function buildServer() {
   const manutencaoQueue = new Queue('alerta-manutencao', { connection: redisConnection });
   registerManutencaoPreventivaRoutes(app, { prisma });
   await agendarAlertaManutencao(manutencaoQueue);
+  void lembreteAgendamentoWorker;
+  await agendarLembreteAgendamento(lembreteAgendamentoQueue);
   registerApiPublicaRoutes(app, { prisma, redis: redisConnection });
   registerRelatoriosExcelRoutes(app, { prisma });
 

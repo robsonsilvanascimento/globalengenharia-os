@@ -203,6 +203,9 @@ model OrdemServico {
   criadoPorUsuarioId    String?      @map("criado_por_usuario_id")
   criadoVia             CriadoVia    @map("criado_via")
   dataAgendada          DateTime?    @map("data_agendada")
+  // Quando o lembrete de agendamento (24h antes) foi enviado ao cliente.
+  // Nulo = ainda nao enviado. Garante que o lembrete saia uma unica vez.
+  lembreteAgendamentoEnviadoEm DateTime? @map("lembrete_agendamento_enviado_em")
   valorCobrado          Decimal?     @db.Decimal(10, 2) @map("valor_cobrado")
   isPendente            Boolean      @default(false) @map("is_pendente")
   slaVencido            Boolean      @default(false) @map("sla_vencido")
