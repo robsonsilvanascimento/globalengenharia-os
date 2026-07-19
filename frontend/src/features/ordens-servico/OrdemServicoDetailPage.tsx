@@ -135,6 +135,10 @@ export function OrdemServicoDetailPage() {
 
   const podeGerenciar = papel === 'atendente' || papel === 'admin';
   const podeVerMidias = papel === 'admin' || papel === 'tecnico';
+  // Valores/pagamentos sao restritos ao admin (regra financeira). Tecnico,
+  // ajudante e atendente nao veem valores no painel — consistente com o app
+  // de campo, que tambem nao expoe nenhum valor.
+  const podeVerValores = papel === 'admin';
 
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -401,11 +405,11 @@ export function OrdemServicoDetailPage() {
             <dt>Data/hora agendada</dt>
             <dd>{formatDataAgendada(ordem.data_agendada)}</dd>
           </div>
-          <div className="os-detail-field">
-            <dt>Valor cobrado</dt>
-            <dd>
-              {formatValorCobrado(ordem.valor_cobrado)}
-              {papel === 'admin' && (
+          {podeVerValores && (
+            <div className="os-detail-field">
+              <dt>Valor cobrado</dt>
+              <dd>
+                {formatValorCobrado(ordem.valor_cobrado)}
                 <button
                   type="button"
                   className="os-detail-button os-detail-valor-edit"
@@ -413,9 +417,9 @@ export function OrdemServicoDetailPage() {
                 >
                   Editar
                 </button>
-              )}
-            </dd>
-          </div>
+              </dd>
+            </div>
+          )}
           <div className="os-detail-field">
             <dt>Criada em</dt>
             <dd>{formatDateTime(ordem.criado_em)}</dd>
@@ -551,7 +555,7 @@ export function OrdemServicoDetailPage() {
 
       <ConsumoPecasSection osId={id} />
 
-      <PagamentosSection osId={id} valorCobrado={ordem.valor_cobrado} />
+      {podeVerValores && <PagamentosSection osId={id} valorCobrado={ordem.valor_cobrado} />}
 
       <Modal
         isOpen={isAssignModalOpen}

@@ -138,7 +138,10 @@ export function OrdensServicoListPage() {
     { key: 'status', header: 'Status', render: (os) => <Badge variant="status" value={os.status} /> },
     { key: 'prioridade', header: 'Prioridade', render: (os) => PRIORIDADE_LABELS[os.prioridade] },
     { key: 'tecnico_nome', header: 'Técnico', render: (os) => os.tecnico_nome ?? '-' },
-    { key: 'valor_cobrado', header: 'Valor', render: (os) => formatValor(os.valor_cobrado) },
+    // Valor visivel apenas para o admin (regra financeira).
+    ...(papel === 'admin'
+      ? [{ key: 'valor_cobrado', header: 'Valor', render: (os: OrdemServico) => formatValor(os.valor_cobrado) } as TableColumn<OrdemServico>]
+      : []),
     { key: 'criado_em', header: 'Data de abertura', render: (os) => formatDataAbertura(os.criado_em) },
   ];
 
