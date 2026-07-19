@@ -35,7 +35,26 @@ services:
     depends_on:
       - postgres
       - redis
-    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run dev"
+    command: sh -c "npx prisma db push --skip-generate && npx prisma db seed && npm run dev"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql://user:password@postgres:5432/os_whatsapp?schema=public
+      REDIS_URL: redis://redis:6379
+      STORAGE_DIR: /app/storage
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - storage_dev_data:/app/storage
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    command: sh -c "npm run dev:worker"
 
   frontend:
     build:

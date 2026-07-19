@@ -77,6 +77,40 @@ services:
       retries: 3
       start_period: 40s
 
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    # Reaproveita a imagem do backend, mas roda o processo de filas (BullMQ)
+    # em vez da API. So o backend prepara o banco; aqui pulamos o entrypoint.
+    entrypoint: ["node", "dist/main/worker.js"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      STORAGE_DIR: /app/storage
+    env_file: .env
+    # Espera o backend ficar SAUDAVEL (schema aplicado + API no ar) antes de
+    # subir, para nunca consultar uma tabela que ainda nao existe no 1o boot.
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      backend:
+        condition: service_healthy
+    volumes:
+      - storage_data:/app/storage
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 384M
+        reservations:
+          memory: 192M
+
   frontend:
     build:
       context: ./frontend
