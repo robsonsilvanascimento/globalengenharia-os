@@ -21,6 +21,8 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: 'Config SLA', to: '/config/sla' },
   { label: 'Relatório Gerencial', to: '/config/relatorio' },
   { label: 'Financeiro', to: '/financeiro' },
+  { label: 'Contas a Receber', to: '/contas-receber' },
+  { label: 'Contratos', to: '/contratos' },
   { label: 'Estoque', to: '/estoque' },
   { label: 'Manutenção', to: '/manutencao' },
   { label: 'Chaves de API', to: '/configuracoes/api-keys' },

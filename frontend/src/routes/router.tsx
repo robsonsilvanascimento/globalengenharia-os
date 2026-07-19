@@ -34,6 +34,8 @@ import { AtendimentoHumanoPage } from '../features/atendimento-humano/Atendiment
 import { ClientesPage } from '../features/clientes/ClientesPage';
 import { ClienteDetailPage } from '../features/clientes/ClienteDetailPage';
 import { LaudosPage } from '../features/laudos/LaudosPage';
+import { ContasReceberPage } from '../features/financeiro-recorrente/ContasReceberPage';
+import { ContratosPage } from '../features/financeiro-recorrente/ContratosPage';
 import AnalyticsDashboardPage from '../features/analytics/pages/AnalyticsDashboardPage';
 import { lazy, Suspense } from 'react';
 import SlaConfigPage from '../features/sla/pages/SlaConfigPage';
@@ -134,6 +136,24 @@ export function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'tecnico']}>
               <LaudosPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/contas-receber"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ContasReceberPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/contratos"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ContratosPage />
             </ProtectedRoute>
           }
         />
