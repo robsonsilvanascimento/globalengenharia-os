@@ -29,6 +29,7 @@ import { HistoricoClienteSection } from './components/HistoricoClienteSection';
 import { FotosEvidenciaSection } from './components/FotosEvidenciaSection';
 import { PagamentosSection } from '../financeiro/components/PagamentosSection';
 import { ConsumoPecasSection } from '../estoque/components/ConsumoPecasSection';
+import { RastreioSection } from '../rastreio/RastreioSection';
 import './RastreabilidadeSection.css';
 import { getValidTransitions, isStatusTerminal, PRIORIDADE_LABELS, STATUS_LABELS } from './statusTransitions';
 import './OrdemServicoDetailPage.css';
@@ -541,6 +542,10 @@ export function OrdemServicoDetailPage() {
       <PendenciasSection osId={id} />
 
       <FotosEvidenciaSection osId={id} />
+
+      {(papel === 'admin' || papel === 'tecnico') && (
+        <RastreioSection osId={id} podeAgir={papel === 'admin' || papel === 'tecnico'} />
+      )}
 
       <HistoricoClienteSection clienteId={ordem.cliente_id} />
 

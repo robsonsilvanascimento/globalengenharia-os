@@ -36,6 +36,7 @@ import { ClienteDetailPage } from '../features/clientes/ClienteDetailPage';
 import { LaudosPage } from '../features/laudos/LaudosPage';
 import { ContasReceberPage } from '../features/financeiro-recorrente/ContasReceberPage';
 import { ContratosPage } from '../features/financeiro-recorrente/ContratosPage';
+import { RotaPage } from '../features/rastreio/RotaPage';
 import AnalyticsDashboardPage from '../features/analytics/pages/AnalyticsDashboardPage';
 import { lazy, Suspense } from 'react';
 import SlaConfigPage from '../features/sla/pages/SlaConfigPage';
@@ -154,6 +155,15 @@ export function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <ContratosPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/rota"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'tecnico']}>
+              <RotaPage />
             </ProtectedRoute>
           }
         />
