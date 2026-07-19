@@ -84,8 +84,10 @@ export interface Laudo {
   id: string;
   numero: string;
   titulo: string;
+  subtitulo: string | null;
   tipo: string;
   clienteNome: string | null;
+  normasAplicaveis: string | null;
   conteudo: string;
   responsavelNome: string | null;
   responsavelCrea: string | null;
@@ -97,8 +99,10 @@ export interface SalvarLaudoInput {
   id?: string;
   ordem_servico_id?: string | null;
   titulo: string;
+  subtitulo?: string | null;
   tipo: string;
   cliente_nome?: string | null;
+  normas_aplicaveis?: string | null;
   conteudo: string;
   responsavel_nome?: string | null;
   responsavel_crea?: string | null;

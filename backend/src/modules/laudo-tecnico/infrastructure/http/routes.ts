@@ -44,8 +44,10 @@ const salvarLaudoBody = z.object({
   id: z.string().uuid().optional(),
   ordem_servico_id: z.string().uuid().nullable().optional(),
   titulo: z.string().min(1),
+  subtitulo: z.string().nullable().optional(),
   tipo: z.string().min(1),
   cliente_nome: z.string().nullable().optional(),
+  normas_aplicaveis: z.string().nullable().optional(),
   conteudo: z.string().min(1),
   responsavel_nome: z.string().nullable().optional(),
   responsavel_crea: z.string().nullable().optional(),
@@ -129,8 +131,10 @@ export function registerLaudoTecnicoRoutes(app: FastifyInstance, deps: LaudoTecn
       id: body.id,
       ordemServicoId: body.ordem_servico_id,
       titulo: body.titulo,
+      subtitulo: body.subtitulo,
       tipo: body.tipo,
       clienteNome: body.cliente_nome,
+      normasAplicaveis: body.normas_aplicaveis,
       conteudo: body.conteudo,
       responsavelNome: body.responsavel_nome,
       responsavelCrea: body.responsavel_crea,
@@ -153,10 +157,14 @@ export function registerLaudoTecnicoRoutes(app: FastifyInstance, deps: LaudoTecn
     const laudo = await laudoRepository.buscarPorId(id);
     if (!laudo) throw new NotFoundError('Laudo nao encontrado');
 
+    const tipoRotulo = (CATEGORIAS_TRECHO as Record<string, string>)[laudo.tipo] ?? laudo.tipo;
     const pdf = await gerarLaudoPdf({
       numero: laudo.numero,
       titulo: laudo.titulo,
+      subtitulo: laudo.subtitulo,
+      tipoRotulo,
       clienteNome: laudo.clienteNome,
+      normasAplicaveis: laudo.normasAplicaveis,
       emitidoEm: laudo.emitidoEm,
       conteudo: laudo.conteudo,
       responsavelNome: laudo.responsavelNome,

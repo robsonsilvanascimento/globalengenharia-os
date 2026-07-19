@@ -343,8 +343,10 @@ model Laudo {
   numero          String   @unique
   ordemServicoId  String?  @map("ordem_servico_id")
   titulo          String
+  subtitulo       String?
   tipo            String
   clienteNome     String?  @map("cliente_nome")
+  normasAplicaveis String? @map("normas_aplicaveis") @db.Text
   conteudo        String   @db.Text
   responsavelNome String?  @map("responsavel_nome")
   responsavelCrea String?  @map("responsavel_crea")

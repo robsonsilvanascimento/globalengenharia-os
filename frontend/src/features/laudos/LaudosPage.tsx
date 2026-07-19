@@ -11,6 +11,7 @@ import {
   type SalvarTrechoInput,
   type TrechoNormativo,
 } from './useLaudos';
+import { ESQUELETO_LAUDO } from './esqueleto-laudo';
 import './LaudosPage.css';
 
 const FORM_VAZIO: SalvarTrechoInput = {
@@ -33,8 +34,10 @@ export function LaudosPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [titulo, setTitulo] = useState('');
+  const [subtitulo, setSubtitulo] = useState('');
   const [tipo, setTipo] = useState('');
   const [clienteNome, setClienteNome] = useState('');
+  const [normasAplicaveis, setNormasAplicaveis] = useState('');
   const [responsavelNome, setResponsavelNome] = useState('');
   const [responsavelCrea, setResponsavelCrea] = useState('');
   const [artNumero, setArtNumero] = useState('');
@@ -46,14 +49,22 @@ export function LaudosPage() {
   async function gerarPdf() {
     const laudo = await salvarLaudo.mutateAsync({
       titulo: titulo.trim() || 'Laudo Técnico',
+      subtitulo: subtitulo.trim() || null,
       tipo: tipo || categoria || 'geral',
       cliente_nome: clienteNome.trim() || null,
+      normas_aplicaveis: normasAplicaveis.trim() || null,
       conteudo: texto,
       responsavel_nome: responsavelNome.trim() || null,
       responsavel_crea: responsavelCrea.trim() || null,
       art_numero: artNumero.trim() || null,
     });
     await abrirLaudoPdf(laudo.id);
+  }
+
+  function inserirEsqueleto() {
+    if (texto.trim() && !confirm('Substituir o conteúdo atual pelo modelo padrão de laudo?')) return;
+    setTexto(ESQUELETO_LAUDO);
+    requestAnimationFrame(() => textareaRef.current?.focus());
   }
 
   const rotuloCategoria = useMemo(() => {
@@ -96,8 +107,10 @@ export function LaudosPage() {
       <header className="laudos-head">
         <h1>Laudos Técnicos</h1>
         <p>
-          Monte o laudo à esquerda e clique nos trechos à direita para inseri-los no ponto do cursor.
-          Confira sempre o número do item da norma antes de assinar.
+          Comece pelo modelo padrão, preencha os campos e clique nos trechos à direita para inseri-los
+          no ponto do cursor. Numere as seções (1., 2., 3.) para gerar o sumário; use <code>[NC]</code>{' '}
+          para não conformidades e <code>-</code> para listas. Confira sempre o número do item da norma
+          antes de assinar.
         </p>
       </header>
 
@@ -108,6 +121,10 @@ export function LaudosPage() {
             <label className="laudos-meta-largo">
               Título do laudo
               <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex.: Laudo de Sistema de Aterramento" />
+            </label>
+            <label className="laudos-meta-largo">
+              Subtítulo / local (aparece na capa)
+              <input value={subtitulo} onChange={(e) => setSubtitulo(e.target.value)} placeholder="Ex.: Edifício Aurora — Bloco A" />
             </label>
             <label>
               Tipo
@@ -136,10 +153,23 @@ export function LaudosPage() {
               Nº da ART
               <input value={artNumero} onChange={(e) => setArtNumero(e.target.value)} placeholder="Registrada no CREA" />
             </label>
+            <label className="laudos-meta-largo">
+              Normas aplicáveis (uma por linha — aparece no sumário)
+              <textarea
+                className="laudos-meta-textarea"
+                rows={2}
+                value={normasAplicaveis}
+                onChange={(e) => setNormasAplicaveis(e.target.value)}
+                placeholder={'ABNT NBR 5419:2015 — Proteção contra descargas atmosféricas\nABNT NBR 5410:2004 — Instalações elétricas de baixa tensão'}
+              />
+            </label>
           </div>
           <div className="laudos-editor-toolbar">
             <span className="laudos-editor-titulo">Documento</span>
             <div className="laudos-editor-acoes">
+              <button type="button" onClick={inserirEsqueleto} className="btn-secundario">
+                Inserir modelo
+              </button>
               <button type="button" onClick={copiar} disabled={!texto} className="btn-secundario">
                 {copiado ? 'Copiado!' : 'Copiar'}
               </button>

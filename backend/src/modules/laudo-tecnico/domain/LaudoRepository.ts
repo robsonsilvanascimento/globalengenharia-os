@@ -4,8 +4,10 @@ export interface CriarLaudoDados {
   numero: string;
   ordemServicoId?: string | null;
   titulo: string;
+  subtitulo?: string | null;
   tipo: string;
   clienteNome?: string | null;
+  normasAplicaveis?: string | null;
   conteudo: string;
   responsavelNome?: string | null;
   responsavelCrea?: string | null;
@@ -16,8 +18,10 @@ export interface CriarLaudoDados {
 export interface AtualizarLaudoDados {
   ordemServicoId?: string | null;
   titulo?: string;
+  subtitulo?: string | null;
   tipo?: string;
   clienteNome?: string | null;
+  normasAplicaveis?: string | null;
   conteudo?: string;
   responsavelNome?: string | null;
   responsavelCrea?: string | null;
