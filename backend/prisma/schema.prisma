@@ -160,6 +160,7 @@ model Usuario {
   movimentacoesCriadas   MovimentacaoEstoque[]  @relation("movimentacoes_criadas")
   orcamentosCriados      OrcamentoOS[]          @relation("orcamentos_criados")
   apiKeys                ApiKey[]
+  rastreiosTecnico       RastreioTecnicoOS[]    @relation("rastreios_tecnico")
 
   @@index([resetSenhaTokenHash])
   @@map("usuarios")
@@ -243,8 +244,13 @@ model OrdemServico {
   custoTotalPecas        Float            @default(0) @map("custo_total_pecas")
   statusPagamento        StatusPagamento  @default(pendente) @map("status_pagamento")
   npsEnviadoEm           DateTime?        @map("nps_enviado_em")
+  // Coordenadas do local de atendimento (usadas na roteirizacao do dia).
+  // Preenchidas manualmente ou no check-in do tecnico.
+  latitude               Float?
+  longitude              Float?
   respostaNps            RespostaNPS?
   pagamentos             PagamentoOS[]
+  rastreios              RastreioTecnicoOS[]
   googleCalendarEventId  String?
 
   @@index([status])
@@ -948,4 +954,31 @@ model ContaReceber {
   // entre si porque o Postgres trata NULLs como distintos.
   @@unique([contratoId, vencimentoEm], name: "conta_contrato_vencimento_unico")
   @@map("contas_receber")
+}
+
+// ===================== Onda 5: rastreio do tecnico =====================
+
+enum TipoRastreioOS {
+  a_caminho
+  chegada
+}
+
+// Evento de rastreio do tecnico numa OS: "a caminho" (avisa o cliente) e
+// "chegada" (check-in por GPS no local). Guarda a coordenada do tecnico no
+// momento, para historico e comprovacao de deslocamento.
+model RastreioTecnicoOS {
+  id             String         @id @default(uuid())
+  ordemServicoId String         @map("ordem_servico_id")
+  tecnicoId      String         @map("tecnico_id")
+  tipo           TipoRastreioOS
+  latitude       Float?
+  longitude      Float?
+  criadoEm       DateTime       @default(now()) @map("criado_em")
+
+  ordemServico OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  tecnico      Usuario      @relation("rastreios_tecnico", fields: [tecnicoId], references: [id])
+
+  @@index([ordemServicoId])
+  @@index([tecnicoId])
+  @@map("rastreios_tecnico_os")
 }

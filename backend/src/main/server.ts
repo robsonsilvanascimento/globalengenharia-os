@@ -70,6 +70,10 @@ import {
   agendarFaturamentoRecorrente,
   faturamentoRecorrenteQueue,
 } from '../modules/financeiro-recorrente/infrastructure/queues/faturamento-recorrente-worker';
+import { registerRastreioTecnicoRoutes } from '../modules/rastreio-tecnico/infrastructure/http/routes';
+import { PrismaRastreioTecnicoRepository } from '../modules/rastreio-tecnico/infrastructure/PrismaRastreioTecnicoRepository';
+import { PrismaOrdemAgendadaRepository } from '../modules/rastreio-tecnico/infrastructure/PrismaOrdemAgendadaRepository';
+import { PrismaBuscarOSParaRastreio } from '../modules/rastreio-tecnico/infrastructure/PrismaBuscarOSParaRastreio';
 import { registerEstoqueRoutes } from '../modules/estoque/infrastructure/http/routes';
 import { registerConsumoPecasRoutes } from '../modules/estoque/infrastructure/http/consumo-routes';
 import { registerManutencaoPreventivaRoutes } from '../modules/manutencao-preventiva/infrastructure/http/routes';
@@ -226,6 +230,19 @@ async function buildServer() {
     clienteRepository: container.clientes.clienteRepository,
   });
   await agendarFaturamentoRecorrente(faturamentoRecorrenteQueue);
+  registerRastreioTecnicoRoutes(app, {
+    rastreioRepository: new PrismaRastreioTecnicoRepository(prisma),
+    ordemAgendadaRepository: new PrismaOrdemAgendadaRepository(prisma),
+    buscarOS: new PrismaBuscarOSParaRastreio(prisma),
+    notificarClienteACaminho: async ({ ordemServicoId, clienteId }) => {
+      await enqueueNotificacaoWhatsapp({
+        ordemServicoId,
+        clienteId,
+        statusNovo: 'a caminho',
+        templateNome: process.env.META_TEMPLATE_TECNICO_A_CAMINHO ?? 'tecnico_a_caminho',
+      });
+    },
+  });
   registerEstoqueRoutes(app, { prisma });
   registerConsumoPecasRoutes(app, { prisma });
   const manutencaoQueue = new Queue('alerta-manutencao', { connection: redisConnection });
