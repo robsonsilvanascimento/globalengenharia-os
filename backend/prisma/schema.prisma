@@ -120,6 +120,8 @@ model Cliente {
   midiasOrdemServico MidiaOrdemServico[]
   tokensPortal       TokenPortalCliente[]
   respostasNps       RespostaNPS[]
+  contasReceber      ContaReceber[]
+  contratosRecorrentes ContratoRecorrente[]
 
   @@map("clientes")
 }
@@ -871,4 +873,79 @@ model ManutencaoPreventiva {
   componenteInstalado ComponenteInstalado @relation(fields: [componenteInstaladoId], references: [id])
 
   @@map("manutencoes_preventivas")
+}
+
+// ===================== Onda 4: financeiro recorrente =====================
+
+enum PeriodicidadeContrato {
+  semanal
+  mensal
+  bimestral
+  trimestral
+  semestral
+  anual
+}
+
+enum StatusContaReceber {
+  aberta
+  paga
+  vencida
+  cancelada
+}
+
+// Contrato de servico recorrente de um cliente (ex.: manutencao mensal). O
+// worker de faturamento gera uma ContaReceber a cada ciclo e avanca
+// `proximaCobrancaEm`.
+model ContratoRecorrente {
+  id                String                @id @default(uuid())
+  clienteId         String                @map("cliente_id")
+  descricao         String
+  valor             Float
+  periodicidade     PeriodicidadeContrato @default(mensal)
+  proximaCobrancaEm DateTime              @map("proxima_cobranca_em")
+  dataInicio        DateTime              @map("data_inicio")
+  dataFim           DateTime?             @map("data_fim")
+  ativo             Boolean               @default(true)
+  criadoPorId       String?               @map("criado_por_id")
+  criadoEm          DateTime              @default(now()) @map("criado_em")
+  atualizadoEm      DateTime              @updatedAt @map("atualizado_em")
+
+  cliente Cliente        @relation(fields: [clienteId], references: [id])
+  contas  ContaReceber[]
+
+  @@index([clienteId])
+  @@index([ativo])
+  @@map("contratos_recorrentes")
+}
+
+// Conta a receber (recebivel). Pode ser avulsa ou gerada por um contrato.
+model ContaReceber {
+  id             String             @id @default(uuid())
+  numero         String             @unique
+  clienteId      String             @map("cliente_id")
+  contratoId     String?            @map("contrato_id")
+  descricao      String
+  valor          Float
+  vencimentoEm   DateTime           @map("vencimento_em")
+  status         StatusContaReceber @default(aberta)
+  pagoEm         DateTime?          @map("pago_em")
+  valorPago      Float?             @map("valor_pago")
+  formaPagamento String?            @map("forma_pagamento")
+  observacao     String?            @db.Text
+  criadoPorId    String?            @map("criado_por_id")
+  criadoEm       DateTime           @default(now()) @map("criado_em")
+  atualizadoEm   DateTime           @updatedAt @map("atualizado_em")
+
+  cliente  Cliente             @relation(fields: [clienteId], references: [id])
+  contrato ContratoRecorrente? @relation(fields: [contratoId], references: [id])
+
+  @@index([clienteId])
+  @@index([status])
+  @@index([contratoId])
+  @@index([vencimentoEm])
+  // Idempotencia do faturamento recorrente: uma unica conta por
+  // contrato/vencimento. Contas avulsas (contrato_id NULL) nao conflitam
+  // entre si porque o Postgres trata NULLs como distintos.
+  @@unique([contratoId, vencimentoEm], name: "conta_contrato_vencimento_unico")
+  @@map("contas_receber")
 }

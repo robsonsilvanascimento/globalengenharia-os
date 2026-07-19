@@ -63,6 +63,13 @@ import { registerPagamentoRoutes } from '../modules/pagamento/infrastructure/htt
 import { registrarGerarPixAoConcluirOSListener } from '../modules/pagamento/application/GerarPixAoConcluirOSListener';
 import { registerFinanceiroRoutes } from '../modules/financeiro/infrastructure/http/routes';
 import { alertaInadimplenciaQueue, agendarAlertaInadimplencia } from '../modules/financeiro/infrastructure/queues/inadimplencia-worker';
+import { registerFinanceiroRecorrenteRoutes } from '../modules/financeiro-recorrente/infrastructure/http/routes';
+import { PrismaContaReceberRepository } from '../modules/financeiro-recorrente/infrastructure/PrismaContaReceberRepository';
+import { PrismaContratoRecorrenteRepository } from '../modules/financeiro-recorrente/infrastructure/PrismaContratoRecorrenteRepository';
+import {
+  agendarFaturamentoRecorrente,
+  faturamentoRecorrenteQueue,
+} from '../modules/financeiro-recorrente/infrastructure/queues/faturamento-recorrente-worker';
 import { registerEstoqueRoutes } from '../modules/estoque/infrastructure/http/routes';
 import { registerConsumoPecasRoutes } from '../modules/estoque/infrastructure/http/consumo-routes';
 import { registerManutencaoPreventivaRoutes } from '../modules/manutencao-preventiva/infrastructure/http/routes';
@@ -213,6 +220,12 @@ async function buildServer() {
   registerPagamentoRoutes(app);
   registerFinanceiroRoutes(app, { prisma });
   await agendarAlertaInadimplencia(alertaInadimplenciaQueue);
+  registerFinanceiroRecorrenteRoutes(app, {
+    contaReceberRepository: new PrismaContaReceberRepository(prisma),
+    contratoRecorrenteRepository: new PrismaContratoRecorrenteRepository(prisma),
+    clienteRepository: container.clientes.clienteRepository,
+  });
+  await agendarFaturamentoRecorrente(faturamentoRecorrenteQueue);
   registerEstoqueRoutes(app, { prisma });
   registerConsumoPecasRoutes(app, { prisma });
   const manutencaoQueue = new Queue('alerta-manutencao', { connection: redisConnection });
