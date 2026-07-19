@@ -122,3 +122,61 @@ export async function abrirLaudoPdf(id: string): Promise<void> {
   window.open(url, '_blank');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
+
+// ===== Relatorio fotografico =====
+
+export interface LaudoFotoMeta {
+  id: string;
+  legenda: string | null;
+  ordem: number;
+  mime_type: string;
+}
+
+export interface AdicionarFotoInput {
+  base64: string;
+  mime_type: string;
+  legenda?: string | null;
+}
+
+function fotosKey(laudoId: string) {
+  return ['laudos', 'fotos', laudoId] as const;
+}
+
+export function useFotosLaudo(laudoId: string | null) {
+  return useQuery({
+    queryKey: fotosKey(laudoId ?? ''),
+    queryFn: () => httpClient.get<LaudoFotoMeta[]>(`/laudos/${laudoId}/fotos`),
+    enabled: !!laudoId,
+  });
+}
+
+export function useAdicionarFotoLaudo(laudoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AdicionarFotoInput) => httpClient.post<LaudoFotoMeta>(`/laudos/${laudoId}/fotos`, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: fotosKey(laudoId) }),
+  });
+}
+
+export function useAtualizarLegendaFoto(laudoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fotoId, legenda }: { fotoId: string; legenda: string | null }) =>
+      httpClient.patch<LaudoFotoMeta>(`/laudos/${laudoId}/fotos/${fotoId}`, { legenda }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: fotosKey(laudoId) }),
+  });
+}
+
+export function useRemoverFotoLaudo(laudoId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (fotoId: string) => httpClient.delete<void>(`/laudos/${laudoId}/fotos/${fotoId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: fotosKey(laudoId) }),
+  });
+}
+
+/** Baixa o binario de uma foto (com auth) e devolve uma object URL para preview. */
+export async function carregarFotoBlobUrl(laudoId: string, fotoId: string): Promise<string> {
+  const blob = await httpClient.getBlob(`/laudos/${laudoId}/fotos/${fotoId}/arquivo`);
+  return URL.createObjectURL(blob);
+}

@@ -1,16 +1,24 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import {
   abrirLaudoPdf,
+  carregarFotoBlobUrl,
+  useAdicionarFotoLaudo,
+  useAtualizarLegendaFoto,
   useAtualizarTrecho,
   useCategoriasTrecho,
   useCriarTrecho,
+  useFotosLaudo,
+  useRemoverFotoLaudo,
   useRemoverTrecho,
   useSalvarLaudo,
   useTrechos,
+  type LaudoFotoMeta,
+  type SalvarLaudoInput,
   type SalvarTrechoInput,
   type TrechoNormativo,
 } from './useLaudos';
+import { redimensionarImagem } from './redimensionarImagem';
 import { ESQUELETO_LAUDO } from './esqueleto-laudo';
 import './LaudosPage.css';
 
@@ -41,13 +49,17 @@ export function LaudosPage() {
   const [responsavelNome, setResponsavelNome] = useState('');
   const [responsavelCrea, setResponsavelCrea] = useState('');
   const [artNumero, setArtNumero] = useState('');
+  // Id do laudo persistido. Necessario para anexar fotos (o binario e
+  // vinculado ao laudo). Preenchido no primeiro "Salvar rascunho"/"Gerar PDF".
+  const [laudoId, setLaudoId] = useState<string | null>(null);
 
   const categorias = useCategoriasTrecho();
   const trechos = useTrechos({ categoria, busca });
   const salvarLaudo = useSalvarLaudo();
 
-  async function gerarPdf() {
-    const laudo = await salvarLaudo.mutateAsync({
+  function montarPayload(): SalvarLaudoInput {
+    return {
+      id: laudoId ?? undefined,
       titulo: titulo.trim() || 'Laudo Técnico',
       subtitulo: subtitulo.trim() || null,
       tipo: tipo || categoria || 'geral',
@@ -57,8 +69,29 @@ export function LaudosPage() {
       responsavel_nome: responsavelNome.trim() || null,
       responsavel_crea: responsavelCrea.trim() || null,
       art_numero: artNumero.trim() || null,
-    });
-    await abrirLaudoPdf(laudo.id);
+    };
+  }
+
+  /** Cria/atualiza o laudo e devolve o id (fixando-o para anexar fotos). */
+  async function salvar(): Promise<string> {
+    const laudo = await salvarLaudo.mutateAsync(montarPayload());
+    setLaudoId(laudo.id);
+    return laudo.id;
+  }
+
+  async function gerarPdf() {
+    const id = await salvar();
+    await abrirLaudoPdf(id);
+  }
+
+  function novoLaudo() {
+    if ((texto.trim() || laudoId) && !confirm('Começar um novo laudo em branco? O laudo atual já está salvo e continua acessível.')) return;
+    setLaudoId(null);
+    setTexto('');
+    setTitulo('');
+    setSubtitulo('');
+    setClienteNome('');
+    setNormasAplicaveis('');
   }
 
   function inserirEsqueleto() {
@@ -109,8 +142,9 @@ export function LaudosPage() {
         <p>
           Comece pelo modelo padrão, preencha os campos e clique nos trechos à direita para inseri-los
           no ponto do cursor. Numere as seções (1., 2., 3.) para gerar o sumário; use <code>[NC]</code>{' '}
-          para não conformidades e <code>-</code> para listas. Confira sempre o número do item da norma
-          antes de assinar.
+          para não conformidades, <code>-</code> para listas e linhas com <code>| … | … |</code> para
+          tabelas de medições. Anexe fotos no fim da página. O sistema adiciona páginas conforme necessário.
+          Confira sempre o número do item da norma antes de assinar.
         </p>
       </header>
 
@@ -170,11 +204,14 @@ export function LaudosPage() {
               <button type="button" onClick={inserirEsqueleto} className="btn-secundario">
                 Inserir modelo
               </button>
+              <button type="button" onClick={novoLaudo} className="btn-secundario">
+                Novo
+              </button>
               <button type="button" onClick={copiar} disabled={!texto} className="btn-secundario">
                 {copiado ? 'Copiado!' : 'Copiar'}
               </button>
-              <button type="button" onClick={() => setTexto('')} disabled={!texto} className="btn-secundario">
-                Limpar
+              <button type="button" onClick={() => salvar()} disabled={!texto || salvarLaudo.isPending} className="btn-secundario">
+                {salvarLaudo.isPending ? 'Salvando…' : laudoId ? 'Salvar' : 'Salvar rascunho'}
               </button>
               <button type="button" onClick={gerarPdf} disabled={!texto || salvarLaudo.isPending} className="btn-primario">
                 {salvarLaudo.isPending ? 'Gerando…' : 'Gerar PDF'}
@@ -190,6 +227,8 @@ export function LaudosPage() {
             spellCheck
           />
           <div className="laudos-editor-rodape">{texto.length} caracteres</div>
+
+          <RelatorioFotografico laudoId={laudoId} onPrecisaSalvar={salvar} />
         </section>
 
         {/* Biblioteca */}
@@ -398,6 +437,137 @@ function TrechoForm(props: TrechoFormProps) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+interface RelatorioFotograficoProps {
+  laudoId: string | null;
+  /** Salva o laudo (criando-o se necessario) e devolve o id, para anexar fotos. */
+  onPrecisaSalvar: () => Promise<string>;
+}
+
+function RelatorioFotografico({ laudoId, onPrecisaSalvar }: RelatorioFotograficoProps) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const fotos = useFotosLaudo(laudoId);
+  const adicionar = useAdicionarFotoLaudo(laudoId ?? '');
+  const remover = useRemoverFotoLaudo(laudoId ?? '');
+  const atualizarLegenda = useAtualizarLegendaFoto(laudoId ?? '');
+
+  async function aoEscolherArquivos(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivos = Array.from(e.target.files ?? []);
+    e.target.value = ''; // permite reescolher o mesmo arquivo
+    if (arquivos.length === 0) return;
+
+    setErro(null);
+    setEnviando(true);
+    try {
+      // Garante um laudo salvo (id) antes de anexar as fotos.
+      await onPrecisaSalvar();
+      for (const arquivo of arquivos) {
+        if (!arquivo.type.startsWith('image/')) continue;
+        const { base64, mimeType } = await redimensionarImagem(arquivo);
+        await adicionar.mutateAsync({ base64, mime_type: mimeType, legenda: null });
+      }
+    } catch {
+      setErro('Não foi possível enviar uma ou mais fotos. Tente novamente.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  const lista = fotos.data ?? [];
+
+  return (
+    <div className="laudos-fotos">
+      <div className="laudos-fotos-cab">
+        <span className="laudos-editor-titulo">Relatório fotográfico</span>
+        <div>
+          <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={aoEscolherArquivos} />
+          <button type="button" className="btn-secundario" onClick={() => fileRef.current?.click()} disabled={enviando}>
+            {enviando ? 'Enviando…' : '+ Adicionar fotos'}
+          </button>
+        </div>
+      </div>
+      <p className="laudos-fotos-ajuda">
+        As fotos entram como uma seção do laudo, com legenda. O sistema adiciona páginas conforme necessário.
+        {!laudoId && ' Ao adicionar a primeira foto, o laudo é salvo automaticamente.'}
+      </p>
+      {erro && <p className="laudos-fotos-erro">{erro}</p>}
+
+      {laudoId && lista.length > 0 && (
+        <div className="laudos-fotos-grid">
+          {lista.map((foto) => (
+            <FotoCard
+              key={foto.id}
+              laudoId={laudoId}
+              foto={foto}
+              onLegenda={(legenda) => atualizarLegenda.mutate({ fotoId: foto.id, legenda })}
+              onRemover={() => {
+                if (confirm('Remover esta foto do laudo?')) remover.mutate(foto.id);
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface FotoCardProps {
+  laudoId: string;
+  foto: LaudoFotoMeta;
+  onLegenda: (legenda: string | null) => void;
+  onRemover: () => void;
+}
+
+function FotoCard({ laudoId, foto, onLegenda, onRemover }: FotoCardProps) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [legenda, setLegenda] = useState(foto.legenda ?? '');
+
+  useEffect(() => {
+    let vivo = true;
+    let criada: string | null = null;
+    carregarFotoBlobUrl(laudoId, foto.id)
+      .then((u) => {
+        criada = u;
+        if (vivo) setUrl(u);
+        else URL.revokeObjectURL(u);
+      })
+      .catch(() => {
+        /* preview indisponivel */
+      });
+    return () => {
+      vivo = false;
+      if (criada) URL.revokeObjectURL(criada);
+    };
+  }, [laudoId, foto.id]);
+
+  useEffect(() => {
+    setLegenda(foto.legenda ?? '');
+  }, [foto.legenda]);
+
+  function salvarLegenda() {
+    const nova = legenda.trim() || null;
+    if (nova !== (foto.legenda ?? null)) onLegenda(nova);
+  }
+
+  return (
+    <div className="laudos-foto-card">
+      <div className="laudos-foto-thumb">{url ? <img src={url} alt={legenda || 'Foto do laudo'} /> : <span>carregando…</span>}</div>
+      <input
+        className="laudos-foto-legenda"
+        value={legenda}
+        placeholder="Legenda da foto…"
+        onChange={(e) => setLegenda(e.target.value)}
+        onBlur={salvarLegenda}
+      />
+      <button type="button" className="btn-link btn-link-perigo" onClick={onRemover}>
+        Remover
+      </button>
     </div>
   );
 }

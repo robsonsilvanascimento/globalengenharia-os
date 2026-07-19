@@ -24,6 +24,7 @@ import { PrismaOrcamentoOSRepository } from '../modules/orcamento/infrastructure
 import { registerLaudoTecnicoRoutes } from '../modules/laudo-tecnico/infrastructure/http/routes';
 import { PrismaTrechoNormativoRepository } from '../modules/laudo-tecnico/infrastructure/PrismaTrechoNormativoRepository';
 import { PrismaLaudoRepository } from '../modules/laudo-tecnico/infrastructure/PrismaLaudoRepository';
+import { PrismaLaudoFotoRepository } from '../modules/laudo-tecnico/infrastructure/PrismaLaudoFotoRepository';
 import { seedTrechosNormativos } from '../modules/laudo-tecnico/infrastructure/seed/seed-trechos-normativos';
 import { registerSlaRoutes } from '../modules/sla/infrastructure/http/routes';
 import { slaVerificacaoQueue } from '../modules/sla/infrastructure/queues/sla-queue';
@@ -175,6 +176,8 @@ async function buildServer() {
   registerLaudoTecnicoRoutes(app, {
     trechoNormativoRepository,
     laudoRepository: new PrismaLaudoRepository(container.prisma),
+    laudoFotoRepository: new PrismaLaudoFotoRepository(container.prisma),
+    armazenamentoArquivoService: container.midias.armazenamentoArquivoService,
   });
   await seedTrechosNormativos(trechoNormativoRepository);
 

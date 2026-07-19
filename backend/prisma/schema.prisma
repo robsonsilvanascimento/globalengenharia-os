@@ -357,9 +357,28 @@ model Laudo {
   atualizadoEm    DateTime @updatedAt @map("atualizado_em")
 
   ordemServico OrdemServico? @relation(fields: [ordemServicoId], references: [id])
+  fotos        LaudoFoto[]
 
   @@index([ordemServicoId])
   @@map("laudos")
+}
+
+// Foto anexada a um laudo (relatorio fotografico). O binario vive no
+// armazenamento de arquivos (chave logica); aqui guardamos so a referencia,
+// a legenda e a ordem de exibicao.
+model LaudoFoto {
+  id           String   @id @default(uuid())
+  laudoId      String   @map("laudo_id")
+  chaveArquivo String   @map("chave_arquivo")
+  mimeType     String   @map("mime_type")
+  legenda      String?
+  ordem        Int      @default(0)
+  criadoEm     DateTime @default(now()) @map("criado_em")
+
+  laudo Laudo @relation(fields: [laudoId], references: [id], onDelete: Cascade)
+
+  @@index([laudoId])
+  @@map("laudo_fotos")
 }
 
 model HistoricoStatusOS {

@@ -26,10 +26,62 @@ export interface DadosLaudoPdf {
   artNumero?: string | null;
   /** Revisao do documento exibida no cabecalho de controle (default "00"). */
   revisao?: string | null;
+  /** Fotos do relatorio fotografico (anexadas ao laudo). */
+  fotos?: FotoLaudoPdf[];
+}
+
+export interface FotoLaudoPdf {
+  buffer: Buffer;
+  mimeType: string;
+  legenda?: string | null;
 }
 
 function formatarData(data: Date): string {
   return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// A fonte padrao (Helvetica/WinAnsi) nao cobre simbolos comuns de engenharia
+// (ohm, delta, etc.), que sairiam como lixo no PDF. Este saneamento troca os
+// mais frequentes por equivalentes seguros e substitui qualquer outro glifo
+// fora da faixa suportada por "?", garantindo que o texto digitado pelo
+// tecnico nunca apareca corrompido.
+const SUBSTITUICOES_SIMBOLO: Record<string, string> = {
+  'Ω': 'ohm', // Ω (letra grega omega)
+  'Ω': 'ohm', // Ω (sinal de ohm)
+  'μ': 'u', //  µ grego (o µ Latin-1 0xB5 e mantido)
+  'Δ': 'delta',
+  '∆': 'delta',
+  '√': 'raiz',
+  '≤': '<=',
+  '≥': '>=',
+  '≠': '!=',
+  '≈': '~=',
+  '∞': 'infinito',
+  '✓': 'OK',
+  '✔': 'OK',
+  '✗': 'X',
+  '✘': 'X',
+};
+
+// Codepoints > 0xFF que a codificacao WinAnsi (CP1252) ainda representa
+// (aspas curvas, travessoes, bullet, reticencias, euro, etc.).
+const CP1252_EXTRA = new Set([
+  0x20ac, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021, 0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x017d, 0x2018,
+  0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x02dc, 0x2122, 0x0161, 0x203a, 0x0153, 0x017e, 0x0178,
+]);
+
+function saneio(texto: string): string {
+  let resultado = '';
+  for (const ch of texto) {
+    const substituto = SUBSTITUICOES_SIMBOLO[ch];
+    if (substituto !== undefined) {
+      resultado += substituto;
+      continue;
+    }
+    const cp = ch.codePointAt(0) ?? 0;
+    resultado += cp <= 0xff || CP1252_EXTRA.has(cp) ? ch : '?';
+  }
+  return resultado;
 }
 
 /**
@@ -48,7 +100,8 @@ type Bloco =
   | { tipo: 'paragrafo'; texto: string }
   | { tipo: 'bullet'; texto: string }
   | { tipo: 'nc'; texto: string }
-  | { tipo: 'aviso'; texto: string };
+  | { tipo: 'aviso'; texto: string }
+  | { tipo: 'tabela'; linhas: string[][] };
 
 interface ItemSumario {
   numero: string;
@@ -58,15 +111,46 @@ interface ItemSumario {
 const RE_HEADING = /^(\d+(?:\.\d+)*)[.)]?\s+(.+)$/;
 const RE_BULLET = /^[-•*]\s+(.+)$/;
 const RE_BULLET_LETRA = /^[a-z][.)]\s+(.+)$/i;
+/** Linha separadora de tabela markdown (ex.: "| --- | --- |"), ignorada. */
+const RE_TABELA_SEP = /^\|(\s*:?-{2,}:?\s*\|)+$/;
+
+/** Quebra uma linha "| a | b | c |" em celulas, descartando as bordas. */
+function celulasDaLinha(linha: string): string[] {
+  return linha
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((c) => c.trim());
+}
 
 function analisarConteudo(conteudo: string): { blocos: Bloco[]; sumario: ItemSumario[] } {
-  const linhas = conteudo.replace(/\r\n/g, '\n').split('\n');
+  // Saneia o texto inteiro uma vez: preserva quebras de linha, marcadores e
+  // acentos, trocando apenas simbolos fora da fonte.
+  const linhas = saneio(conteudo).replace(/\r\n/g, '\n').split('\n');
   const blocos: Bloco[] = [];
   const sumario: ItemSumario[] = [];
 
+  // Buffer de linhas de tabela em sequencia, descarregado quando termina o bloco.
+  let tabela: string[][] = [];
+  const flushTabela = (): void => {
+    if (tabela.length > 0) {
+      blocos.push({ tipo: 'tabela', linhas: tabela });
+      tabela = [];
+    }
+  };
+
   for (const bruto of linhas) {
     const linha = bruto.trim();
-    if (linha === '') continue;
+    if (linha === '') {
+      flushTabela();
+      continue;
+    }
+
+    if (linha.startsWith('|')) {
+      if (!RE_TABELA_SEP.test(linha)) tabela.push(celulasDaLinha(linha));
+      continue;
+    }
+    flushTabela();
 
     if (/^\[nc\]/i.test(linha)) {
       blocos.push({ tipo: 'nc', texto: linha.replace(/^\[nc\]\s*/i, '') });
@@ -99,6 +183,7 @@ function analisarConteudo(conteudo: string): { blocos: Bloco[]; sumario: ItemSum
     blocos.push({ tipo: 'paragrafo', texto: linha });
   }
 
+  flushTabela();
   return { blocos, sumario };
 }
 
@@ -112,9 +197,26 @@ const CORES_AVISO = { fundo: '#FBEFD6', barra: '#A9700A', rotulo: 'ATENÇÃO' };
  * (secoes, listas e caixas de nao conformidade) e o bloco de responsabilidade
  * tecnica com a ART.
  */
-export async function gerarLaudoPdf(dados: DadosLaudoPdf): Promise<Buffer> {
+export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
     try {
+      // Saneia os campos de metadados (o corpo e saneado no parser e as
+      // legendas na galeria). Assim nenhum texto digitado sai corrompido.
+      const opcional = (v: string | null | undefined): string | null | undefined =>
+        v === null || v === undefined ? v : saneio(v);
+      const dados: DadosLaudoPdf = {
+        ...entrada,
+        numero: saneio(entrada.numero),
+        titulo: saneio(entrada.titulo),
+        subtitulo: opcional(entrada.subtitulo),
+        tipoRotulo: opcional(entrada.tipoRotulo),
+        clienteNome: opcional(entrada.clienteNome),
+        normasAplicaveis: opcional(entrada.normasAplicaveis),
+        responsavelNome: opcional(entrada.responsavelNome),
+        responsavelCrea: opcional(entrada.responsavelCrea),
+        artNumero: opcional(entrada.artNumero),
+      };
+
       const doc: DocumentoPdf = new PDFDocument({
         size: 'A4',
         margins: { top: 104, bottom: 54, left: 50, right: 50 },
@@ -204,6 +306,115 @@ export async function gerarLaudoPdf(dados: DadosLaudoPdf): Promise<Buffer> {
         doc.fillColor(cores.barra).font('Helvetica-Bold').fontSize(8).text(cores.rotulo, xTexto, y + padY, { width: larguraTexto });
         doc.fillColor(CORES.tinta).font('Helvetica').fontSize(10).text(texto, xTexto, y + padY + alturaRotulo, { width: larguraTexto });
         return y + alturaBox + 8;
+      }
+
+      // Tabela de dados/medicoes. Primeira linha e o cabecalho (fundo da marca).
+      // Colunas de largura igual; altura da linha ajustada ao maior texto; o
+      // cabecalho e repetido quando a tabela avanca para a proxima pagina.
+      function desenharTabela(yInicial: number, linhas: string[][]): number {
+        const padCel = 5;
+        const nCols = Math.max(...linhas.map((l) => l.length));
+        const larguraCol = largura / nCols;
+
+        const alturaDaLinha = (celulas: string[], negrito: boolean): number => {
+          doc.font(negrito ? 'Helvetica-Bold' : 'Helvetica').fontSize(9);
+          let maior = 0;
+          for (let c = 0; c < nCols; c += 1) {
+            const alturaTexto = doc.heightOfString(celulas[c] ?? '', { width: larguraCol - padCel * 2 });
+            if (alturaTexto > maior) maior = alturaTexto;
+          }
+          return maior + padCel * 2;
+        };
+
+        const desenharLinha = (y: number, celulas: string[], indice: number): number => {
+          const ehCabecalho = indice === 0;
+          const altura = alturaDaLinha(celulas, ehCabecalho);
+          doc.save();
+          if (ehCabecalho) {
+            doc.rect(esquerda, y, largura, altura).fill(CORES.marca);
+          } else if (indice % 2 === 0) {
+            doc.rect(esquerda, y, largura, altura).fill(CORES.marcaSuave);
+          }
+          doc.restore();
+          doc.save();
+          doc.lineWidth(0.5).strokeColor(CORES.linha);
+          doc.rect(esquerda, y, largura, altura).stroke();
+          for (let c = 1; c < nCols; c += 1) {
+            doc.moveTo(esquerda + larguraCol * c, y).lineTo(esquerda + larguraCol * c, y + altura).stroke();
+          }
+          doc.restore();
+          for (let c = 0; c < nCols; c += 1) {
+            doc
+              .font(ehCabecalho ? 'Helvetica-Bold' : 'Helvetica')
+              .fontSize(9)
+              .fillColor(ehCabecalho ? CORES.branco : CORES.tinta)
+              .text(celulas[c] ?? '', esquerda + larguraCol * c + padCel, y + padCel, { width: larguraCol - padCel * 2 });
+          }
+          return y + altura;
+        };
+
+        let y = garantir(yInicial + 4, alturaDaLinha(linhas[0] ?? [], true) + 24);
+        const cabecalho = linhas[0] ?? [];
+        y = desenharLinha(y, cabecalho, 0);
+        for (let i = 1; i < linhas.length; i += 1) {
+          const celulas = linhas[i] ?? [];
+          const altura = alturaDaLinha(celulas, false);
+          if (y + altura > limiteInferior()) {
+            y = novaPagina();
+            y = desenharLinha(y, cabecalho, 0); // repete o cabecalho na nova pagina
+          }
+          y = desenharLinha(y, celulas, i);
+        }
+        return y + 10;
+      }
+
+      // Relatorio fotografico: galeria em 2 colunas, cada foto encaixada numa
+      // moldura de tamanho fixo (preservando a proporcao) com a legenda abaixo.
+      // Quebra de pagina automatica quando a proxima linha nao cabe. Uma foto
+      // corrompida vira um aviso na celula em vez de derrubar o PDF.
+      function desenharGaleriaFotos(yInicial: number, numeroSecao: string, fotos: FotoLaudoPdf[]): number {
+        let y = desenharH1(yInicial, numeroSecao, 'Relatório Fotográfico');
+
+        const gap = 14;
+        const colLargura = (largura - gap) / 2;
+        const alturaImagem = 150;
+        const alturaLegenda = 22;
+        const alturaCelula = alturaImagem + alturaLegenda + 6;
+
+        for (let i = 0; i < fotos.length; i += 2) {
+          if (y + alturaCelula > limiteInferior()) y = novaPagina();
+          const linha = fotos.slice(i, i + 2);
+          linha.forEach((foto, coluna) => {
+            const x = esquerda + coluna * (colLargura + gap);
+            const numero = i + coluna + 1;
+
+            doc.save();
+            doc.rect(x, y, colLargura, alturaImagem).lineWidth(0.8).stroke(CORES.linha);
+            doc.restore();
+            try {
+              doc.image(foto.buffer, x + 2, y + 2, {
+                fit: [colLargura - 4, alturaImagem - 4],
+                align: 'center',
+                valign: 'center',
+              });
+            } catch {
+              doc
+                .font('Helvetica-Oblique')
+                .fontSize(8)
+                .fillColor(CORES.tintaFraca)
+                .text('Imagem indisponível', x + 6, y + alturaImagem / 2 - 4, { width: colLargura - 12, align: 'center' });
+            }
+
+            const legenda = `Foto ${numero}${foto.legenda ? ` — ${saneio(foto.legenda)}` : ''}`;
+            doc
+              .font('Helvetica')
+              .fontSize(8)
+              .fillColor(CORES.tintaSuave)
+              .text(legenda, x, y + alturaImagem + 4, { width: colLargura, align: 'center', height: alturaLegenda, ellipsis: true });
+          });
+          y += alturaCelula;
+        }
+        return y + 6;
       }
 
       // ---------- Capa ----------
@@ -433,6 +644,19 @@ export async function gerarLaudoPdf(dados: DadosLaudoPdf): Promise<Buffer> {
 
       // ---------- Montagem ----------
       const { blocos, sumario } = analisarConteudo(dados.conteudo);
+      const fotos = dados.fotos ?? [];
+
+      // O relatorio fotografico entra como ultima secao numerada, na sequencia
+      // das secoes principais do corpo, e tambem no sumario.
+      let numeroSecaoFotos = '';
+      if (fotos.length > 0) {
+        const maiorNumero = sumario.reduce((max, item) => {
+          const n = Number.parseInt(item.numero, 10);
+          return Number.isNaN(n) ? max : Math.max(max, n);
+        }, 0);
+        numeroSecaoFotos = String(maiorNumero + 1);
+        sumario.push({ numero: numeroSecaoFotos, texto: 'Relatório Fotográfico' });
+      }
 
       desenharCapa();
       desenharSumario(sumario);
@@ -456,10 +680,18 @@ export async function gerarLaudoPdf(dados: DadosLaudoPdf): Promise<Buffer> {
           case 'aviso':
             y = desenharCaixa(y, bloco.texto, CORES_AVISO);
             break;
+          case 'tabela':
+            y = desenharTabela(y, bloco.linhas);
+            break;
           default:
             y = desenharParagrafo(y, bloco.texto);
         }
       }
+
+      if (fotos.length > 0) {
+        y = desenharGaleriaFotos(y, numeroSecaoFotos, fotos);
+      }
+
       desenharResponsabilidade(y);
 
       // Carimba a faixa da marca, o cabecalho de controle e o rodape em todas

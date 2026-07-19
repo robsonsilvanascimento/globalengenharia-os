@@ -113,6 +113,69 @@
   text-align: right;
 }
 
+/* Relatorio fotografico */
+.laudos-fotos {
+  border-top: 1px solid #e2e6ec;
+  padding: 0.9rem;
+  background: #fbfcfe;
+}
+.laudos-fotos-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+.laudos-fotos-ajuda {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  color: #8a94a2;
+}
+.laudos-fotos-erro {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  color: #c0392b;
+}
+.laudos-fotos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.7rem;
+}
+.laudos-foto-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: #fff;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  padding: 0.5rem;
+}
+.laudos-foto-thumb {
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #eef2f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  color: #8a94a2;
+}
+.laudos-foto-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.laudos-foto-legenda {
+  border: 1px solid #d3dae6;
+  border-radius: 6px;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+}
+.laudos-foto-card .btn-link {
+  align-self: flex-start;
+}
+
 /* Biblioteca */
 .laudos-biblioteca {
   background: #fff;
