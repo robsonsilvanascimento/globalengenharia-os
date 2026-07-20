@@ -14,15 +14,15 @@
   margin: 0;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-slate-900);
 }
 
 .usuarios-page-new-button {
   padding: 8px 16px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #ffffff;
-  background-color: #2563eb;
+  color: var(--color-surface);
+  background-color: var(--color-primary-600);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -30,10 +30,10 @@
 
 .usuarios-page-status-ativo {
   font-weight: 600;
-  color: #15803d;
+  color: var(--color-green-text);
 }
 
 .usuarios-page-status-inativo {
   font-weight: 600;
-  color: #b91c1c;
+  color: var(--color-danger-700);
 }

@@ -9,7 +9,7 @@
   margin: 0;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-slate-900);
 }
 
 .sla-config-form {
@@ -27,31 +27,31 @@
 .sla-config-label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--color-slate-600);
   text-transform: capitalize;
 }
 
 .sla-config-input {
   padding: 8px 10px;
   font-size: 0.9rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-slate-300);
   border-radius: 6px;
   outline: none;
   width: 100%;
 }
 
 .sla-config-input:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary-600);
 }
 
 .sla-config-error {
   font-size: 0.85rem;
-  color: #dc2626;
+  color: var(--color-danger-600);
 }
 
 .sla-config-success {
   font-size: 0.85rem;
-  color: #15803d;
+  color: var(--color-green-text);
 }
 
 .sla-config-actions {
@@ -64,8 +64,8 @@
   padding: 8px 20px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #ffffff;
-  background-color: #2563eb;
+  color: var(--color-surface);
+  background-color: var(--color-primary-600);
   border: none;
   border-radius: 6px;
   cursor: pointer;

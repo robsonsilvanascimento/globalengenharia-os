@@ -15,7 +15,7 @@
   display: flex;
   gap: 4px;
   margin-bottom: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-slate-200);
 }
 
 .fin-tab {
@@ -25,18 +25,18 @@
   border-bottom: 2px solid transparent;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-slate-500);
   cursor: pointer;
   margin-bottom: -1px;
 }
 
 .fin-tab:hover {
-  color: #374151;
+  color: var(--color-slate-700);
 }
 
 .fin-tab-active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: var(--color-primary-600);
+  border-bottom-color: var(--color-primary-600);
 }
 
 .fin-filtro {
@@ -53,20 +53,20 @@
   gap: 4px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-slate-700);
 }
 
 .fin-filtro input[type="date"] {
   padding: 8px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-slate-300);
   border-radius: 6px;
   font-size: 0.875rem;
 }
 
 .fin-filtro button {
   padding: 8px 20px;
-  background: #2563eb;
-  color: #fff;
+  background: var(--color-primary-600);
+  color: var(--color-surface);
   border: none;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -75,7 +75,7 @@
 }
 
 .fin-filtro button:hover {
-  background: #1d4ed8;
+  background: var(--color-primary-700);
 }
 
 .fin-cards {
@@ -86,15 +86,15 @@
 }
 
 .fin-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-slate-200);
   border-radius: 8px;
   padding: 20px;
 }
 
 .fin-card-label {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: var(--color-slate-500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
@@ -103,7 +103,7 @@
 .fin-card-value {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-slate-900);
 }
 
 .fin-card-value.green {
@@ -115,7 +115,7 @@
 }
 
 .fin-card-value.red {
-  color: #dc2626;
+  color: var(--color-danger-600);
 }
 
 .fin-cards-sm {
@@ -126,15 +126,15 @@
 }
 
 .fin-card-sm {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-slate-200);
   border-radius: 8px;
   padding: 16px;
 }
 
 .fin-card-sm-label {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-slate-500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
@@ -143,12 +143,12 @@
 .fin-card-sm-value {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-slate-900);
 }
 
 .fin-chart-box {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-slate-200);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 24px;
@@ -157,13 +157,13 @@
 .fin-chart-box h2 {
   font-size: 1rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-slate-700);
   margin-bottom: 16px;
 }
 
 .fin-table-box {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-slate-200);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 24px;
@@ -173,7 +173,7 @@
 .fin-table-box h2 {
   font-size: 1rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-slate-700);
   margin-bottom: 12px;
 }
 
@@ -186,16 +186,16 @@
 .fin-table th {
   text-align: left;
   padding: 8px 10px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  color: #6b7280;
+  background: var(--color-slate-50);
+  border-bottom: 1px solid var(--color-slate-200);
+  color: var(--color-slate-500);
   font-weight: 500;
 }
 
 .fin-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #f3f4f6;
-  color: #374151;
+  border-bottom: 1px solid var(--color-slate-100);
+  color: var(--color-slate-700);
 }
 
 .fin-table tr:last-child td {
@@ -204,8 +204,8 @@
 
 .fin-badge-red {
   display: inline-block;
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--color-danger-50);
+  color: var(--color-danger-600);
   border-radius: 9999px;
   padding: 2px 10px;
   font-size: 0.75rem;

@@ -18,8 +18,8 @@
 }
 
 .foto-uploader__input-label:hover {
-  border-color: #2563eb;
-  color: #2563eb;
+  border-color: var(--color-primary-600);
+  color: var(--color-primary-600);
 }
 
 .foto-uploader__input-label input[type='file'] {
@@ -50,7 +50,7 @@
   top: 4px;
   right: 4px;
   background: rgba(0, 0, 0, 0.5);
-  color: #fff;
+  color: var(--color-surface);
   border: none;
   border-radius: 50%;
   width: 22px;
@@ -75,8 +75,8 @@
   }
 
   .foto-uploader__input-label:hover {
-    border-color: #60a5fa;
-    color: #60a5fa;
+    border-color: var(--color-primary-400);
+    color: var(--color-primary-400);
   }
 }
 
@@ -86,6 +86,6 @@
 }
 
 :root[data-theme='dark'] .foto-uploader__input-label:hover {
-  border-color: #60a5fa;
-  color: #60a5fa;
+  border-color: var(--color-primary-400);
+  color: var(--color-primary-400);
 }

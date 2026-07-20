@@ -36,7 +36,7 @@
   margin-bottom: 1.2rem;
 }
 .fr-card {
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid #e2e6ec;
   border-radius: 12px;
   padding: 0.9rem 1rem;
@@ -81,7 +81,7 @@
 /* Tabela */
 .fr-tabela-wrap {
   overflow-x: auto;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid #e2e6ec;
   border-radius: 12px;
 }
@@ -168,7 +168,7 @@
 }
 .fr-btn-primario {
   background: #0b5fff;
-  color: #fff;
+  color: var(--color-surface);
 }
 .fr-btn-primario:disabled {
   opacity: 0.5;
@@ -204,7 +204,7 @@
   padding: 1rem;
 }
 .fr-modal {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 12px;
   padding: 1.4rem;
   width: 100%;

@@ -12,20 +12,20 @@
 .rastreabilidade-title {
   font-size: 1.05rem;
   font-weight: 600;
-  color: var(--color-text-primary, #1e293b);
+  color: var(--color-text-primary, var(--color-slate-800));
   margin: 0;
 }
 
 .rastreabilidade-empty {
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted, var(--color-slate-500));
   font-size: 0.875rem;
   font-style: italic;
 }
 
 /* ---- Componente card ---- */
 .rastreabilidade-componente-card {
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-surface, var(--color-surface));
+  border: 1px solid var(--color-border, var(--color-slate-200));
   border-radius: 10px;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
@@ -43,12 +43,12 @@
 
 .rastreabilidade-componente-nome {
   font-weight: 600;
-  color: var(--color-text-primary, #1e293b);
+  color: var(--color-text-primary, var(--color-slate-800));
   font-size: 0.95rem;
 }
 
 .rastreabilidade-componente-detalhe {
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted, var(--color-slate-500));
   font-size: 0.875rem;
 }
 
@@ -67,23 +67,23 @@
 }
 
 .rastreabilidade-badge-gray {
-  background: var(--color-gray-100, #f1f5f9);
-  color: var(--color-gray-700, #334155);
+  background: var(--color-gray-100, var(--color-slate-100));
+  color: var(--color-gray-700, var(--color-slate-700));
 }
 
 .rastreabilidade-badge-green {
-  background: #dcfce7;
+  background: var(--color-green-bg);
   color: #166534;
 }
 
 .rastreabilidade-badge-red {
-  background: #fee2e2;
+  background: var(--color-danger-50);
   color: #991b1b;
 }
 
 .rastreabilidade-componente-obs {
   font-size: 0.85rem;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted, var(--color-slate-500));
   margin: 0.25rem 0 0.75rem;
 }
 
@@ -97,7 +97,7 @@
 
 .rastreabilidade-empty-docs {
   font-size: 0.82rem;
-  color: var(--color-text-muted, #94a3b8);
+  color: var(--color-text-muted, var(--color-slate-400));
   font-style: italic;
 }
 
@@ -106,7 +106,7 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.45rem 0.6rem;
-  background: var(--color-gray-50, #f8fafc);
+  background: var(--color-gray-50, var(--color-slate-50));
   border-radius: 6px;
   flex-wrap: wrap;
 }
@@ -124,7 +124,7 @@
 .rastreabilidade-doc-nome {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-text-primary, #1e293b);
+  color: var(--color-text-primary, var(--color-slate-800));
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -134,7 +134,7 @@
 
 .rastreabilidade-doc-meta {
   font-size: 0.78rem;
-  color: var(--color-text-muted, #94a3b8);
+  color: var(--color-text-muted, var(--color-slate-400));
   white-space: nowrap;
 }
 
@@ -164,42 +164,42 @@
 }
 
 .rastreabilidade-btn-primary {
-  background: #3b82f6;
-  color: #fff;
+  background: var(--color-primary-500);
+  color: var(--color-surface);
 }
 
 .rastreabilidade-btn-primary:hover:not(:disabled) {
-  background: #2563eb;
+  background: var(--color-primary-600);
 }
 
 .rastreabilidade-btn-secondary {
-  background: var(--color-gray-100, #f1f5f9);
-  color: var(--color-text-primary, #1e293b);
+  background: var(--color-gray-100, var(--color-slate-100));
+  color: var(--color-text-primary, var(--color-slate-800));
   margin-top: 0.5rem;
 }
 
 .rastreabilidade-btn-secondary:hover:not(:disabled) {
-  background: var(--color-gray-200, #e2e8f0);
+  background: var(--color-gray-200, var(--color-slate-200));
 }
 
 .rastreabilidade-btn-outline {
   background: transparent;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
+  color: var(--color-primary-500);
+  border: 1px solid var(--color-primary-500);
 }
 
 .rastreabilidade-btn-outline:hover:not(:disabled) {
-  background: #eff6ff;
+  background: var(--color-primary-50);
 }
 
 .rastreabilidade-btn-danger {
   background: transparent;
-  color: #dc2626;
-  border: 1px solid #dc2626;
+  color: var(--color-danger-600);
+  border: 1px solid var(--color-danger-600);
 }
 
 .rastreabilidade-btn-danger:hover:not(:disabled) {
-  background: #fef2f2;
+  background: var(--color-danger-50);
 }
 
 /* ---- Modal ---- */
@@ -215,7 +215,7 @@
 }
 
 .rastreabilidade-modal {
-  background: var(--color-surface, #fff);
+  background: var(--color-surface, var(--color-surface));
   border-radius: 14px;
   padding: 1.5rem 1.75rem;
   width: 100%;
@@ -229,7 +229,7 @@
 .rastreabilidade-modal-title {
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--color-text-primary, #1e293b);
+  color: var(--color-text-primary, var(--color-slate-800));
   margin: 0;
 }
 
@@ -248,32 +248,32 @@
 .rastreabilidade-form-field label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-text-secondary, #475569);
+  color: var(--color-text-secondary, var(--color-slate-600));
 }
 
 .rastreabilidade-form-field input,
 .rastreabilidade-form-field select,
 .rastreabilidade-form-field textarea {
   padding: 0.5rem 0.75rem;
-  border: 1px solid var(--color-border, #cbd5e1);
+  border: 1px solid var(--color-border, var(--color-slate-300));
   border-radius: 7px;
   font-size: 0.875rem;
-  background: var(--color-input-bg, #fff);
-  color: var(--color-text-primary, #1e293b);
+  background: var(--color-input-bg, var(--color-surface));
+  color: var(--color-text-primary, var(--color-slate-800));
   outline: none;
 }
 
 .rastreabilidade-form-field input:focus,
 .rastreabilidade-form-field select:focus,
 .rastreabilidade-form-field textarea:focus {
-  border-color: #3b82f6;
+  border-color: var(--color-primary-500);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 .rastreabilidade-error {
   font-size: 0.82rem;
-  color: #dc2626;
-  background: #fef2f2;
+  color: var(--color-danger-600);
+  background: var(--color-danger-50);
   border: 1px solid #fca5a5;
   border-radius: 6px;
   padding: 0.4rem 0.7rem;
@@ -288,16 +288,16 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .rastreabilidade-componente-card { background: #1e293b; border-color: #334155; }
-  .rastreabilidade-componente-nome { color: #f1f5f9; }
-  .rastreabilidade-title { color: #f1f5f9; }
-  .rastreabilidade-documento-item { background: #0f172a; }
-  .rastreabilidade-doc-nome { color: #e2e8f0; }
-  .rastreabilidade-badge-gray { background: #334155; color: #cbd5e1; }
-  .rastreabilidade-modal { background: #1e293b; }
-  .rastreabilidade-modal-title { color: #f1f5f9; }
+  .rastreabilidade-componente-card { background: var(--color-slate-800); border-color: var(--color-slate-700); }
+  .rastreabilidade-componente-nome { color: var(--color-slate-100); }
+  .rastreabilidade-title { color: var(--color-slate-100); }
+  .rastreabilidade-documento-item { background: var(--color-slate-900); }
+  .rastreabilidade-doc-nome { color: var(--color-slate-200); }
+  .rastreabilidade-badge-gray { background: var(--color-slate-700); color: var(--color-slate-300); }
+  .rastreabilidade-modal { background: var(--color-slate-800); }
+  .rastreabilidade-modal-title { color: var(--color-slate-100); }
   .rastreabilidade-form-field input,
   .rastreabilidade-form-field select,
-  .rastreabilidade-form-field textarea { background: #0f172a; border-color: #475569; color: #e2e8f0; }
-  .rastreabilidade-btn-secondary { background: #334155; color: #e2e8f0; }
+  .rastreabilidade-form-field textarea { background: var(--color-slate-900); border-color: var(--color-slate-600); color: var(--color-slate-200); }
+  .rastreabilidade-btn-secondary { background: var(--color-slate-700); color: var(--color-slate-200); }
 }
