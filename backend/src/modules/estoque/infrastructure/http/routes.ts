@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { authenticate, requireRole } from '../../../../shared/http/middlewares/auth';
-import { ConflictError, NotFoundError, ValidationError } from '../../../../shared/http/errors/AppError';
+import { ConflictError, NotFoundError } from '../../../../shared/http/errors/AppError';
 import { enqueueAlertaEstoque } from '../queues/alerta-estoque-queue';
 
 const pecaIdParams = z.object({

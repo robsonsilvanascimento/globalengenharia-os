@@ -230,16 +230,16 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
       const { esquerda, direita, largura } = area(doc);
       const limiteInferior = (): number => doc.page.height - doc.page.margins.bottom - 18;
 
-      function novaPagina(): number {
+      const novaPagina = (): number => {
         doc.addPage();
         return doc.page.margins.top;
-      }
-      function garantir(y: number, altura: number): number {
+      };
+      const garantir = (y: number, altura: number): number => {
         return y + altura > limiteInferior() ? novaPagina() : y;
-      }
+      };
 
       // ---------- Corpo: primitivas de bloco ----------
-      function desenharH1(y: number, numero: string, texto: string): number {
+      const desenharH1 = (y: number, numero: string, texto: string): number => {
         const rotulo = `${numero}.  ${texto.toUpperCase()}`;
         doc.font('Helvetica-Bold').fontSize(12.5);
         const altura = doc.heightOfString(rotulo, { width: largura });
@@ -250,26 +250,26 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
         doc.moveTo(esquerda, y).lineTo(direita, y).lineWidth(1).stroke(CORES.marca);
         doc.restore();
         return y + 9;
-      }
+      };
 
-      function desenharH2(y: number, numero: string, texto: string): number {
+      const desenharH2 = (y: number, numero: string, texto: string): number => {
         const rotulo = `${numero}  ${texto}`;
         doc.font('Helvetica-Bold').fontSize(10.8);
         const altura = doc.heightOfString(rotulo, { width: largura });
         y = garantir(y, altura + 10) + 5;
         doc.fillColor(CORES.marcaEscura).text(rotulo, esquerda, y, { width: largura });
         return y + altura + 5;
-      }
+      };
 
-      function desenharParagrafo(y: number, texto: string): number {
+      const desenharParagrafo = (y: number, texto: string): number => {
         doc.font('Helvetica').fontSize(10.5).fillColor(CORES.tinta);
         const altura = doc.heightOfString(texto, { width: largura, align: 'justify' });
         y = garantir(y, altura);
         doc.text(texto, esquerda, y, { width: largura, align: 'justify' });
         return y + altura + 6;
-      }
+      };
 
-      function desenharBullet(y: number, texto: string): number {
+      const desenharBullet = (y: number, texto: string): number => {
         const recuo = 16;
         const larguraTexto = largura - recuo;
         doc.font('Helvetica').fontSize(10.5).fillColor(CORES.tinta);
@@ -280,13 +280,13 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
         doc.restore();
         doc.fillColor(CORES.tinta).text(texto, esquerda + recuo, y, { width: larguraTexto });
         return y + altura + 5;
-      }
+      };
 
-      function desenharCaixa(
+      const desenharCaixa = (
         y: number,
         texto: string,
         cores: { fundo: string; barra: string; rotulo: string },
-      ): number {
+      ): number => {
         const padX = 12;
         const padY = 9;
         const larguraBarra = 3;
@@ -306,12 +306,12 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
         doc.fillColor(cores.barra).font('Helvetica-Bold').fontSize(8).text(cores.rotulo, xTexto, y + padY, { width: larguraTexto });
         doc.fillColor(CORES.tinta).font('Helvetica').fontSize(10).text(texto, xTexto, y + padY + alturaRotulo, { width: larguraTexto });
         return y + alturaBox + 8;
-      }
+      };
 
       // Tabela de dados/medicoes. Primeira linha e o cabecalho (fundo da marca).
       // Colunas de largura igual; altura da linha ajustada ao maior texto; o
       // cabecalho e repetido quando a tabela avanca para a proxima pagina.
-      function desenharTabela(yInicial: number, linhas: string[][]): number {
+      const desenharTabela = (yInicial: number, linhas: string[][]): number => {
         const padCel = 5;
         const nCols = Math.max(...linhas.map((l) => l.length));
         const larguraCol = largura / nCols;
@@ -366,13 +366,13 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
           y = desenharLinha(y, celulas, i);
         }
         return y + 10;
-      }
+      };
 
       // Relatorio fotografico: galeria em 2 colunas, cada foto encaixada numa
       // moldura de tamanho fixo (preservando a proporcao) com a legenda abaixo.
       // Quebra de pagina automatica quando a proxima linha nao cabe. Uma foto
       // corrompida vira um aviso na celula em vez de derrubar o PDF.
-      function desenharGaleriaFotos(yInicial: number, numeroSecao: string, fotos: FotoLaudoPdf[]): number {
+      const desenharGaleriaFotos = (yInicial: number, numeroSecao: string, fotos: FotoLaudoPdf[]): number => {
         let y = desenharH1(yInicial, numeroSecao, 'Relatório Fotográfico');
 
         const gap = 14;
@@ -415,10 +415,10 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
           y += alturaCelula;
         }
         return y + 6;
-      }
+      };
 
       // ---------- Capa ----------
-      function desenharCapa(): void {
+      const desenharCapa = (): void => {
         let y = doc.page.margins.top + 4;
         try {
           const abrir = (
@@ -494,10 +494,10 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
         yc += 38;
         linhaCard(xc1, yc, 'CREA', dados.responsavelCrea?.trim() || 'A preencher');
         linhaCard(xc2, yc, 'ART nº', dados.artNumero?.trim() || 'A preencher');
-      }
+      };
 
       // ---------- Sumario + normas ----------
-      function desenharSumario(sumario: ItemSumario[]): void {
+      const desenharSumario = (sumario: ItemSumario[]): void => {
         doc.addPage();
         let y = doc.page.margins.top;
         y = tituloSecao(doc, y, 'Sumário') + 4;
@@ -540,10 +540,10 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
             y += altura + 5;
           }
         }
-      }
+      };
 
       // ---------- Responsabilidade tecnica ----------
-      function desenharResponsabilidade(yInicial: number): void {
+      const desenharResponsabilidade = (yInicial: number): void => {
         let y = garantir(yInicial + 12, 210);
         y = tituloSecao(doc, y, 'Responsabilidade Técnica') + 2;
 
@@ -564,10 +564,10 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
         doc.moveTo(esquerda, y).lineTo(esquerda + 280, y).lineWidth(1).stroke('#888888');
         doc.restore();
         doc.font('Helvetica').fontSize(9).fillColor(CORES.tintaFraca).text('Assinatura do responsável técnico', esquerda, y + 6);
-      }
+      };
 
       // ---------- Cabecalho de controle (todas as paginas) ----------
-      function desenharCabecalhoControle(folha: number, total: number): void {
+      const desenharCabecalhoControle = (folha: number, total: number): void => {
         const topo = 28;
         const altura = 60;
         const larguraDir = 158;
@@ -621,9 +621,9 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
           doc.font('Helvetica-Bold').fontSize(6.5).fillColor(CORES.tintaFraca).text(rotulo, xDir + 8, yy, { width: 36, lineBreak: false });
           doc.font('Helvetica').fontSize(8).fillColor(CORES.tinta).text(valor, xDir + 46, yy, { width: larguraDir - 54, lineBreak: false });
         });
-      }
+      };
 
-      function desenharRodapePagina(): void {
+      const desenharRodapePagina = (): void => {
         const y = doc.page.height - doc.page.margins.bottom + 10;
         doc.save();
         doc.moveTo(esquerda, y).lineTo(direita, y).lineWidth(0.5).stroke(CORES.linha);
@@ -640,7 +640,7 @@ export async function gerarLaudoPdf(entrada: DadosLaudoPdf): Promise<Buffer> {
           { width: largura, align: 'center', lineBreak: false },
         );
         doc.page.margins.bottom = margemAnterior;
-      }
+      };
 
       // ---------- Montagem ----------
       const { blocos, sumario } = analisarConteudo(dados.conteudo);

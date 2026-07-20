@@ -203,26 +203,26 @@ export async function gerarRelatorioTecnico(dados: DadosRelatorioTecnico): Promi
       // -----------------------------------------------------------------------
       // HELPER: seção com título
       // -----------------------------------------------------------------------
-      function secao(titulo: string) {
+      const secao = (titulo: string) => {
         doc.moveDown(0.6);
         const y = doc.y;
         doc.rect(MARGEM, y, LARGURA_CONTEUDO, 18).fill(COR_PRIMARIA);
         doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff').text(titulo.toUpperCase(), MARGEM + 8, y + 4);
         doc.y = y + 22;
         doc.fillColor(COR_TEXTO);
-      }
+      };
 
-      function campo(rotulo: string, valor: string | null | undefined, x = MARGEM + 4, largura = LARGURA_CONTEUDO - 8) {
+      const campo = (rotulo: string, valor: string | null | undefined, x = MARGEM + 4, largura = LARGURA_CONTEUDO - 8) => {
         if (!valor) return;
         doc.fontSize(9).font('Helvetica-Bold').fillColor(COR_TEXTO_LEVE).text(`${rotulo}: `, x, doc.y, { continued: true, width: largura });
         doc.font('Helvetica').fillColor(COR_TEXTO).text(valor);
-      }
+      };
 
-      function pularSeNecessario(alturaMinima: number) {
+      const pularSeNecessario = (alturaMinima: number) => {
         if (doc.y + alturaMinima > doc.page.height - MARGEM - 30) {
           doc.addPage();
         }
-      }
+      };
 
       // -----------------------------------------------------------------------
       // DADOS DO CLIENTE
