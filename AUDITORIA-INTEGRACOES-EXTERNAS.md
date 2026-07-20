@@ -56,6 +56,19 @@ separador?"** Isso inclui:
 - [x] **Mercado Pago — assinatura do webhook** (`pagamento/infrastructure/mercadopago/MercadoPagoGatewayAdapter.ts`)
       — corrigido em 2026-07-20 (separador `,` em vez de `&`), coberto por teste com
       formato real.
+- [x] **Mercado Pago — normalização do `data.id` no manifest HMAC** — corrigido em
+      2026-07-20 (commit `b60b081`). O Mercado Pago normaliza `data.id` para minúsculas
+      antes de calcular a assinatura (confirmado via WebSearch: doc oficial + discussão
+      real no `mercadopago/sdk-nodejs`, já que WebFetch direto ao domínio do Mercado Pago
+      retornou 403 — bloqueio do próprio site, não da política de proxy). IDs
+      alfanuméricos com maiúsculas (ex.: ULIDs) faziam a assinatura de webhooks legítimos
+      falhar sempre. O id original (case preservado) continua sendo usado em
+      `consultarPagamento`/Inbox — só o manifest HMAC usa a versão minúscula. Coberto por
+      2 testes novos: um provando que a assinatura com id normalizado é aceita, outro
+      provando que a assinatura calculada SEM normalizar é rejeitada (prova de que o
+      teste é significativo). Revisado por `security-code-tester` (sem achados —
+      normalização não enfraquece o HMAC, ainda comparado via `timingSafeEqual`) e
+      `infra-code-analyst` (sem achados — mudança é uma função pura, sem I/O/concorrência).
 - [ ] **Mercado Pago — payload do webhook** (`extrairEventoWebhook`) — confirmar que
       `type`/`data.id` são exatamente os campos que o Mercado Pago envia hoje (a doc pode
       ter mudado desde que o código original foi escrito).
