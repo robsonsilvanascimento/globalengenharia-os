@@ -133,6 +133,7 @@ export class PrismaOrdemServicoRepository implements OrdemServicoRepository {
     const where = {
       status: filtros.status,
       tecnicoId: filtros.tecnicoId,
+      ajudanteId: filtros.ajudanteId,
       clienteId: filtros.clienteId,
     };
 

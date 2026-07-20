@@ -33,6 +33,10 @@ export function registerFotosServicoRoutes(
   const adminOuTecnico = { preHandler: [authenticate, requireRole(['admin', 'tecnico'])] };
   const equipe = { preHandler: [authenticate, requireRole(['admin', 'tecnico', 'atendente'])] };
   const adminOuAtendente = { preHandler: [authenticate, requireRole(['admin', 'atendente'])] };
+  // Leitura das fotos tambem liberada pro ajudante (app mobile, somente visualizacao).
+  const leituraEquipeComAjudante = {
+    preHandler: [authenticate, requireRole(['admin', 'tecnico', 'ajudante'])],
+  };
 
   /** Monta os dados do relatorio (OS + fotos) ou lanca erro de dominio. */
   async function montarDadosRelatorio(ordemServicoId: string) {
@@ -87,7 +91,7 @@ export function registerFotosServicoRoutes(
     return reply.status(201).send(foto);
   });
 
-  app.get('/ordens-servico/:id/fotos-servico', adminOuTecnico, async (request, reply) => {
+  app.get('/ordens-servico/:id/fotos-servico', leituraEquipeComAjudante, async (request, reply) => {
     const { id } = osIdParams.parse(request.params);
 
     const fotos = await listarFotosUseCase.execute(id);

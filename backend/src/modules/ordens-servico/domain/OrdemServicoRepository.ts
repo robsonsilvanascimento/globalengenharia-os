@@ -78,6 +78,7 @@ export interface AtualizarOrdemServicoDados {
 export interface ListarOrdensServicoFiltros {
   status?: StatusOS;
   tecnicoId?: string;
+  ajudanteId?: string;
   clienteId?: string;
 }
 

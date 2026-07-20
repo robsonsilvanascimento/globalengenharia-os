@@ -45,6 +45,10 @@ export interface RastreioTecnicoRoutesDeps {
 
 export function registerRastreioTecnicoRoutes(app: FastifyInstance, deps: RastreioTecnicoRoutesDeps): void {
   const equipe = { preHandler: [authenticate, requireRole(['admin', 'tecnico'])] };
+  // Leitura do historico de rastreio tambem liberada pro ajudante (app mobile, somente visualizacao).
+  const leituraEquipeComAjudante = {
+    preHandler: [authenticate, requireRole(['admin', 'tecnico', 'ajudante'])],
+  };
 
   const registrarACaminho = new RegistrarACaminhoUseCase({
     rastreioRepository: deps.rastreioRepository,
@@ -88,7 +92,7 @@ export function registerRastreioTecnicoRoutes(app: FastifyInstance, deps: Rastre
   });
 
   // Historico de rastreio de uma OS.
-  app.get('/ordens-servico/:id/rastreio', equipe, async (request, reply) => {
+  app.get('/ordens-servico/:id/rastreio', leituraEquipeComAjudante, async (request, reply) => {
     const { id } = osIdParams.parse(request.params);
     const eventos = await deps.rastreioRepository.listarPorOrdemServico(id);
     return reply.status(200).send(eventos.map(rastreioResponse));

@@ -139,6 +139,14 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
   const equipeOperacional = {
     preHandler: [authenticate, requireRole(['atendente', 'admin', 'tecnico'])],
   };
+  /**
+   * Mesmo grupo de equipeOperacional, mas tambem inclui ajudante — usado
+   * apenas nas rotas de LEITURA que o app mobile do ajudante consome (ele
+   * so visualiza as OS em que esta escalado, nunca altera status).
+   */
+  const equipeOperacionalComLeituraAjudante = {
+    preHandler: [authenticate, requireRole(['atendente', 'admin', 'tecnico', 'ajudante'])],
+  };
 
   /**
    * Valor cobrado e informacao financeira restrita ao admin. Para qualquer
@@ -150,13 +158,13 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
   }
 
   /**
-   * Tecnico so pode acessar a OS se estiver atribuido a ela (como tecnico ou
-   * ajudante) — evita que qualquer tecnico autenticado veja OS de outros.
+   * Tecnico/ajudante so podem acessar a OS se estiverem atribuidos a ela —
+   * evita que qualquer tecnico/ajudante autenticado veja OS de outros.
    * Retorna 404 (nao 403) para nao revelar a existencia da OS a quem nao tem
    * acesso, seguindo o mesmo padrao ja usado na consulta via WhatsApp.
    */
   function garantirAcessoTecnico(ordemServico: OrdemServico, usuarioId: string, papel: string): void {
-    if (papel !== 'tecnico') return;
+    if (papel !== 'tecnico' && papel !== 'ajudante') return;
     if (ordemServico.tecnicoId === usuarioId || ordemServico.ajudanteId === usuarioId) return;
     throw new NotFoundError('Ordem de Servico nao encontrada');
   }
@@ -256,16 +264,18 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     };
   }
 
-  app.get('/ordens-servico', equipeOperacional, async (request, reply) => {
+  app.get('/ordens-servico', equipeOperacionalComLeituraAjudante, async (request, reply) => {
     const query = listQuerySchema.parse(request.query);
     const papel = request.user!.papel;
-    // Tecnico so pode listar as proprias OS — ignora tecnico_id vindo da
-    // query e forca o proprio id, para nao poder consultar a agenda de outro.
+    // Tecnico/ajudante so podem listar as proprias OS — ignora tecnico_id
+    // vindo da query e forca o proprio id, para nao consultar a agenda de outros.
     const tecnicoId = papel === 'tecnico' ? request.user!.id : query.tecnico_id;
+    const ajudanteId = papel === 'ajudante' ? request.user!.id : undefined;
 
     const resultado = await listarOrdensServicoUseCase.execute({
       status: query.status,
       tecnicoId,
+      ajudanteId,
       clienteId: query.cliente_id,
       page: query.page,
       pageSize: query.page_size,
@@ -305,7 +315,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     return reply.status(201).send(await montarOrdemServicoResponse(ordemServico, deveOcultarValor(request.user!.papel)));
   });
 
-  app.get('/ordens-servico/:id', equipeOperacional, async (request, reply) => {
+  app.get('/ordens-servico/:id', equipeOperacionalComLeituraAjudante, async (request, reply) => {
     const { id } = idParamsSchema.parse(request.params);
     const papel = request.user!.papel;
 
@@ -438,7 +448,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     }
   });
 
-  app.get('/ordens-servico/:id/historico', equipeOperacional, async (request, reply) => {
+  app.get('/ordens-servico/:id/historico', equipeOperacionalComLeituraAjudante, async (request, reply) => {
     const { id } = idParamsSchema.parse(request.params);
     const query = historicoQuerySchema.parse(request.query);
 

@@ -7,6 +7,7 @@ import type {
 export interface ListarOrdensServicoInput {
   status?: StatusOS;
   tecnicoId?: string;
+  ajudanteId?: string;
   clienteId?: string;
   page?: number;
   pageSize?: number;
@@ -30,6 +31,7 @@ export class ListarOrdensServicoUseCase {
       {
         status: input.status,
         tecnicoId: input.tecnicoId,
+        ajudanteId: input.ajudanteId,
         clienteId: input.clienteId,
       },
       { page, pageSize },

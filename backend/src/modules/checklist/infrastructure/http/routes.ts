@@ -35,6 +35,10 @@ export function registerChecklistRoutes(app: FastifyInstance, deps: ChecklistRou
 
   const adminOuTecnico = { preHandler: [authenticate, requireRole(['admin', 'tecnico'])] };
   const somenteAdmin = { preHandler: [authenticate, requireRole(['admin'])] };
+  // Leitura do checklist tambem liberada pro ajudante (app mobile, somente visualizacao).
+  const leituraEquipeComAjudante = {
+    preHandler: [authenticate, requireRole(['admin', 'tecnico', 'ajudante'])],
+  };
 
   const criarTemplateUseCase = new CriarTemplateChecklistUseCase({ checklistRepository });
   const listarTemplatesUseCase = new ListarTemplatesChecklistUseCase({ checklistRepository });
@@ -68,7 +72,7 @@ export function registerChecklistRoutes(app: FastifyInstance, deps: ChecklistRou
     return reply.status(200).send(templates);
   });
 
-  app.get('/ordens-servico/:id/checklist', adminOuTecnico, async (request, reply) => {
+  app.get('/ordens-servico/:id/checklist', leituraEquipeComAjudante, async (request, reply) => {
     const { id } = osIdParams.parse(request.params);
     const os = await garantirOS(id);
     const resultado = await buscarChecklistOSUseCase.execute({
