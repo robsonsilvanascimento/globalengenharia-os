@@ -15,7 +15,12 @@ export interface GerarRelatorioTecnicoUseCaseDeps {
 export class GerarRelatorioTecnicoUseCase {
   constructor(private readonly deps: GerarRelatorioTecnicoUseCaseDeps) {}
 
-  async execute(ordemServicoId: string, solicitanteName?: string): Promise<Buffer> {
+  /**
+   * @param ocultarValores quando `true`, omite todo dado financeiro do
+   * relatorio (valor cobrado e estimativa de custo). Usado para gerar o PDF
+   * sem valores quando o solicitante nao e admin (ex.: tecnico em campo).
+   */
+  async execute(ordemServicoId: string, ocultarValores = false, solicitanteName?: string): Promise<Buffer> {
     const os = await this.deps.ordemServicoRepository.findByIdCompleto(ordemServicoId);
     if (!os) throw new NotFoundError('Ordem de serviço não encontrada');
 
@@ -35,7 +40,7 @@ export class GerarRelatorioTecnicoUseCase {
       descricaoProblema: os.descricaoProblema,
       enderecoAtendimento: os.enderecoAtendimento,
       criadoVia: os.criadoVia,
-      valorCobrado: os.valorCobrado != null ? Number(os.valorCobrado) : null,
+      valorCobrado: ocultarValores || os.valorCobrado == null ? null : Number(os.valorCobrado),
       clienteNome: os.cliente.nome,
       clienteTelefone: os.cliente.telefoneWhatsapp,
       clienteEmail: os.cliente.email,
@@ -66,7 +71,7 @@ export class GerarRelatorioTecnicoUseCase {
         observacao: h.observacao,
         criadoEm: h.criadoEm,
       })),
-      estimativa: os.estimativaCusto
+      estimativa: os.estimativaCusto && !ocultarValores
         ? {
             horasEstimadasTecnico: Number(os.estimativaCusto.horasEstimadasTecnico),
             valorHoraTecnico: Number(os.estimativaCusto.valorHoraTecnico),

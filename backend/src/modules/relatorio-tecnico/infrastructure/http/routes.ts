@@ -24,7 +24,10 @@ export function registerRelatorioTecnicoRoutes(app: FastifyInstance, deps: Relat
   app.get('/ordens-servico/:id/relatorio-tecnico', adminOuTecnico, async (request, reply) => {
     const { id } = osIdParams.parse(request.params);
 
-    const pdfBuffer = await useCase.execute(id);
+    // Valores financeiros (valor cobrado e estimativa de custo) so entram no
+    // relatorio quando quem gera e admin.
+    const ocultarValores = request.user!.papel !== 'admin';
+    const pdfBuffer = await useCase.execute(id, ocultarValores);
 
     reply.header('Content-Type', 'application/pdf');
     reply.header('Content-Disposition', `attachment; filename="relatorio-tecnico-os-${id}.pdf"`);

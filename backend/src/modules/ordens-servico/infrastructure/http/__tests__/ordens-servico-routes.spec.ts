@@ -372,7 +372,18 @@ describe('rotas de ordens-servico (integracao leve, sem Postgres)', () => {
     expect(response.json()).toMatchObject({ id: OS_ID, valor_cobrado: 249.9 });
   });
 
-  it('GET /ordens-servico/:id reflete o valor_cobrado registrado', async () => {
+  it('GET /ordens-servico/:id reflete o valor_cobrado para o admin', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: `/ordens-servico/${OS_ID}`,
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ valor_cobrado: 249.9 });
+  });
+
+  it('GET /ordens-servico/:id OMITE o valor_cobrado para atendente (nao vem no payload)', async () => {
     const response = await app.inject({
       method: 'GET',
       url: `/ordens-servico/${OS_ID}`,
@@ -380,10 +391,23 @@ describe('rotas de ordens-servico (integracao leve, sem Postgres)', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toMatchObject({ valor_cobrado: 249.9 });
+    expect(response.json()).not.toHaveProperty('valor_cobrado');
   });
 
-  it('GET /ordens-servico lista reflete o valor_cobrado registrado (ou null quando ausente)', async () => {
+  it('GET /ordens-servico lista reflete o valor_cobrado para o admin', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/ordens-servico',
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    const osAlvo = body.data.find((item: { id: string }) => item.id === OS_ID);
+    expect(osAlvo).toMatchObject({ valor_cobrado: 249.9 });
+  });
+
+  it('GET /ordens-servico lista OMITE o valor_cobrado para atendente', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/ordens-servico',
@@ -393,7 +417,7 @@ describe('rotas de ordens-servico (integracao leve, sem Postgres)', () => {
     expect(response.statusCode).toBe(200);
     const body = response.json();
     const osAlvo = body.data.find((item: { id: string }) => item.id === OS_ID);
-    expect(osAlvo).toMatchObject({ valor_cobrado: 249.9 });
+    expect(osAlvo).not.toHaveProperty('valor_cobrado');
   });
 
   it('PATCH /ordens-servico/:id/atribuir com tecnico ocupado no mesmo horario retorna 409', async () => {

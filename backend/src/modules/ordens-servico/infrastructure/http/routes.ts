@@ -140,9 +140,13 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
     preHandler: [authenticate, requireRole(['atendente', 'admin', 'tecnico'])],
   };
 
-  /** Verdadeiro quando o usuario logado e um tecnico sem permissao de ver valores cobrados. */
+  /**
+   * Valor cobrado e informacao financeira restrita ao admin. Para qualquer
+   * outro papel (tecnico, ajudante, atendente) o campo e omitido da resposta
+   * — nao apenas escondido na UI, mas ausente do payload da API.
+   */
   function deveOcultarValor(papel: string): boolean {
-    return papel === 'tecnico';
+    return papel !== 'admin';
   }
 
   /**
@@ -298,7 +302,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
       criadoVia: 'painel',
     });
 
-    return reply.status(201).send(await montarOrdemServicoResponse(ordemServico));
+    return reply.status(201).send(await montarOrdemServicoResponse(ordemServico, deveOcultarValor(request.user!.papel)));
   });
 
   app.get('/ordens-servico/:id', equipeOperacional, async (request, reply) => {
@@ -326,7 +330,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
         prioridade: body.prioridade,
         dataAgendada: body.data_agendada,
       });
-      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico));
+      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico, deveOcultarValor(request.user!.papel)));
     } catch (error) {
       relancarComoAppError(error);
     }
@@ -367,7 +371,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
         usuarioId: request.user!.id,
         dataAgendada: body.data_agendada,
       });
-      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico));
+      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico, deveOcultarValor(request.user!.papel)));
     } catch (error) {
       relancarComoAppError(error);
     }
@@ -428,7 +432,7 @@ export function registerOrdensServicoRoutes(app: FastifyInstance, deps: OrdensSe
         ordemServicoId: id,
         valorCobrado: body.valor_cobrado,
       });
-      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico));
+      return reply.status(200).send(await montarOrdemServicoResponse(ordemServico, deveOcultarValor(request.user!.papel)));
     } catch (error) {
       relancarComoAppError(error);
     }
