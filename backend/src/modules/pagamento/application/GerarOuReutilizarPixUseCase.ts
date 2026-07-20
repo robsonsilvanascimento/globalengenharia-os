@@ -1,5 +1,6 @@
 import type { PagamentoOS, PrismaClient } from '@prisma/client';
-import { gerarPixOrdemServico } from '../infrastructure/mercadopago/MercadoPagoService';
+import type { PaymentGateway } from '../domain/PaymentGateway';
+import { MercadoPagoGatewayAdapter } from '../infrastructure/mercadopago/MercadoPagoGatewayAdapter';
 
 export interface GerarOuReutilizarPixInput {
   ordemServicoId: string;
@@ -28,6 +29,10 @@ export interface GerarOuReutilizarPixInput {
 export async function gerarOuReutilizarPix(
   input: GerarOuReutilizarPixInput,
   prisma: PrismaClient,
+  // Injetavel para testes; em producao usa sempre o Mercado Pago. A camada de
+  // aplicacao so depende da porta `PaymentGateway` — nao do SDK/formato do
+  // provedor.
+  gateway: PaymentGateway = new MercadoPagoGatewayAdapter(),
 ): Promise<PagamentoOS> {
   return prisma.$transaction(
     async (tx) => {
@@ -42,8 +47,8 @@ export async function gerarOuReutilizarPix(
         return pagamentoExistente;
       }
 
-      const { mercadoPagoId, qrCode, copiaECola } = await gerarPixOrdemServico({
-        ordemServicoId: input.ordemServicoId,
+      const { idExterno, qrCode, copiaECola } = await gateway.criarCobrancaPix({
+        referenciaExterna: input.ordemServicoId,
         valor: input.valorCobrado,
         clienteNome: input.clienteNome,
         clienteEmail: input.clienteEmail,
@@ -56,13 +61,15 @@ export async function gerarOuReutilizarPix(
           valor: input.valorCobrado,
           pixQrCode: qrCode,
           pixCopiaECola: copiaECola,
-          mercadoPagoId,
+          // Campo nomeado por historico (unico provedor ate hoje); guarda o
+          // id externo devolvido pelo gateway, seja qual for o provedor.
+          mercadoPagoId: idExterno,
           criadoPorId: input.criadoPorId,
         },
       });
     },
     // Timeout maior que o padrao (5s): a transacao inclui uma chamada HTTP
-    // externa ao Mercado Pago quando ainda nao ha Pix pendente.
+    // externa ao gateway de pagamento quando ainda nao ha Pix pendente.
     { timeout: 15000 },
   );
 }

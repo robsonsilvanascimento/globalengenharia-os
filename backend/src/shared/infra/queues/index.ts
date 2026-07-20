@@ -9,6 +9,7 @@ export const QUEUE_NAMES = {
   CALCULAR_COMISSAO: 'calcular-comissao',
   PIX_WHATSAPP: 'pix-whatsapp',
   ENTREGA_RECIBO: 'entrega-recibo',
+  PROCESSAR_WEBHOOK_PAGAMENTO: 'processar-webhook-pagamento',
 } as const;
 
 export interface WhatsappConversaJobData {
@@ -238,4 +239,27 @@ export const entregaReciboQueue = new Queue<EntregaReciboJobData>(
 
 export async function enqueueEntregaRecibo(data: EntregaReciboJobData): Promise<void> {
   await entregaReciboQueue.add('entregar-recibo', data);
+}
+
+export interface ProcessarWebhookPagamentoJobData {
+  webhookEventId: string;
+}
+
+/**
+ * Fila responsavel por processar (fora do request HTTP) os eventos de
+ * webhook de pagamento ja registrados no Inbox
+ * (`webhook_eventos_pagamento`). O handler HTTP so valida a assinatura,
+ * grava o evento e enfileira — toda a logica de negocio roda aqui, mantendo
+ * a resposta ao provedor rapida mesmo se o processamento demorar/falhar.
+ */
+export const processarWebhookPagamentoQueue = new Queue<ProcessarWebhookPagamentoJobData>(
+  QUEUE_NAMES.PROCESSAR_WEBHOOK_PAGAMENTO,
+  {
+    connection: redisConnection,
+    defaultJobOptions,
+  },
+);
+
+export async function enqueueProcessarWebhookPagamento(data: ProcessarWebhookPagamentoJobData): Promise<void> {
+  await processarWebhookPagamentoQueue.add('processar-webhook-pagamento', data);
 }

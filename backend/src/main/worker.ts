@@ -34,6 +34,7 @@ import { ArmazenamentoLocalService } from '../shared/infra/storage/Armazenamento
 import { createComissaoWorker } from '../modules/pagamento/infrastructure/queues/comissao-worker';
 import { createPixWhatsappWorker } from '../modules/pagamento/infrastructure/queues/pix-whatsapp-worker';
 import { createEntregaReciboWorker } from '../modules/pagamento/infrastructure/queues/entrega-recibo-worker';
+import { createPagamentoWebhookWorker } from '../modules/pagamento/infrastructure/queues/pagamento-webhook-worker';
 import { createAlertaEstoqueWorker } from '../modules/estoque/infrastructure/queues/alerta-estoque-worker';
 
 /**
@@ -119,6 +120,16 @@ function start(): void {
     logger.error({ jobId: job?.id, err }, 'Job da fila entrega-recibo falhou');
   });
 
+  const pagamentoWebhookWorker = createPagamentoWebhookWorker();
+
+  pagamentoWebhookWorker.on('completed', (job) => {
+    logger.info({ jobId: job.id }, 'Job da fila processar-webhook-pagamento concluido');
+  });
+
+  pagamentoWebhookWorker.on('failed', (job, err) => {
+    logger.error({ jobId: job?.id, err }, 'Job da fila processar-webhook-pagamento falhou');
+  });
+
   const alertaEstoqueWorker = createAlertaEstoqueWorker();
 
   alertaEstoqueWorker.on('completed', (job) => {
@@ -197,7 +208,7 @@ function start(): void {
   });
 
   logger.info(
-    'Worker de filas iniciado (notificacoes-whatsapp, whatsapp-conversa, entrega-pdf-os, notificacao-tecnico, calcular-comissao, pix-whatsapp, entrega-recibo, alerta-estoque)',
+    'Worker de filas iniciado (notificacoes-whatsapp, whatsapp-conversa, entrega-pdf-os, notificacao-tecnico, calcular-comissao, pix-whatsapp, entrega-recibo, processar-webhook-pagamento, alerta-estoque)',
   );
 }
 

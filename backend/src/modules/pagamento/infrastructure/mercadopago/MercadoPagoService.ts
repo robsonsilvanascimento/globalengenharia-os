@@ -50,4 +50,27 @@ export async function cancelarPixOrdemServico(mercadoPagoId: string): Promise<vo
   await payment.cancel({ id: mercadoPagoId });
 }
 
+export interface PagamentoConsultado {
+  id: string;
+  /** Status bruto do Mercado Pago ('approved', 'pending', 'rejected', 'cancelled', etc). */
+  status: string | undefined;
+  valor: number;
+  referenciaExterna: string | null;
+}
+
+/**
+ * Consulta o estado atual de um pagamento diretamente no Mercado Pago (nunca
+ * confiar apenas no payload do webhook, que pode estar desatualizado/forjado).
+ */
+export async function consultarPagamentoPorId(mercadoPagoId: string): Promise<PagamentoConsultado> {
+  const payment = new Payment(client);
+  const result = await payment.get({ id: mercadoPagoId });
+  return {
+    id: String(result.id),
+    status: result.status,
+    valor: Number(result.transaction_amount ?? 0),
+    referenciaExterna: result.external_reference ?? null,
+  };
+}
+
 export { client as mercadoPagoClient };

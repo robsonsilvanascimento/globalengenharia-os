@@ -4,7 +4,7 @@ import { authenticate, requireRole } from '../../../../shared/http/middlewares/a
 import { prisma } from '../../../../shared/infra/PrismaClient';
 import { GerarPixUseCase } from '../../application/GerarPixUseCase';
 import { registrarPagamentoManual } from '../../application/RegistrarPagamentoManualUseCase';
-import { cancelarPixOrdemServico } from '../mercadopago/MercadoPagoService';
+import { MercadoPagoGatewayAdapter } from '../mercadopago/MercadoPagoGatewayAdapter';
 import { NotFoundError, ValidationError } from '../../../../shared/http/errors/AppError';
 import { logger } from '../../../../shared/infra/Logger';
 
@@ -22,6 +22,7 @@ const pagamentoManualBodySchema = z.object({
 
 export function registerPagamentoRoutes(app: FastifyInstance): void {
   const somenteAdmin = { preHandler: [authenticate, requireRole(['admin'])] };
+  const gateway = new MercadoPagoGatewayAdapter();
 
   app.post('/ordens-servico/:id/pagamentos/pix', somenteAdmin, async (request, reply) => {
     const { id } = osIdParamsSchema.parse(request.params);
@@ -89,18 +90,18 @@ export function registerPagamentoRoutes(app: FastifyInstance): void {
 
       if (pagamento.tipo === 'pix_automatico' && pagamento.mercadoPagoId) {
         try {
-          await cancelarPixOrdemServico(pagamento.mercadoPagoId);
+          await gateway.cancelarCobranca(pagamento.mercadoPagoId);
         } catch (err) {
-          // Se o Mercado Pago recusar o cancelamento (ex.: o cliente pagou
+          // Se o gateway recusar o cancelamento (ex.: o cliente pagou
           // segundos antes desta chamada), nao atualizamos o status local:
           // isso deixaria o registro divergindo do que realmente aconteceu
-          // no Mercado Pago (Pix pago, mas marcado como cancelado aqui).
+          // no gateway (Pix pago, mas marcado como cancelado aqui).
           logger.error(
             { pagamentoOSId: pagamento.id, mercadoPagoId: pagamento.mercadoPagoId, err },
-            'Falha ao cancelar Pix no Mercado Pago',
+            'Falha ao cancelar Pix no gateway de pagamento',
           );
           throw new ValidationError(
-            'Nao foi possivel cancelar o Pix no Mercado Pago - verifique se ele ja foi pago',
+            'Nao foi possivel cancelar o Pix no gateway de pagamento - verifique se ele ja foi pago',
           );
         }
       }

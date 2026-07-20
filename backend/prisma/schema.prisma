@@ -982,3 +982,35 @@ model RastreioTecnicoOS {
   @@index([tecnicoId])
   @@map("rastreios_tecnico_os")
 }
+
+// ===================== Inbox pattern: webhooks de pagamento =====================
+
+enum StatusWebhookEventoPagamento {
+  pendente
+  processado
+  falhou
+  ignorado
+}
+
+// Registro bruto de cada webhook de pagamento recebido, gravado ANTES de
+// qualquer processamento de negocio (Inbox Pattern). Da auditoria/replay dos
+// eventos e desacopla o recebimento (responder rapido ao provedor) do
+// processamento (feito pelo worker). A idempotencia de negocio em si continua
+// garantida pelo estado do PagamentoOS (ver ProcessarWebhookPagamentoUseCase),
+// nao por uma chave unica aqui — o Mercado Pago nao garante um id de evento
+// estavel em todo formato de notificacao.
+model WebhookEventoPagamento {
+  id           String                       @id @default(uuid())
+  provedor     String
+  tipoEvento   String                       @map("tipo_evento")
+  idExterno    String                       @map("id_externo")
+  payloadBruto String                       @db.Text @map("payload_bruto")
+  status       StatusWebhookEventoPagamento @default(pendente)
+  erro         String?                      @db.Text
+  criadoEm     DateTime                     @default(now()) @map("criado_em")
+  processadoEm DateTime?                    @map("processado_em")
+
+  @@index([provedor, idExterno])
+  @@index([status])
+  @@map("webhook_eventos_pagamento")
+}
