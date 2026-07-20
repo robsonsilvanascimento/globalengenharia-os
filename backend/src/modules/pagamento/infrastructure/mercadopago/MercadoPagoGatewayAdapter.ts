@@ -74,6 +74,11 @@ export class MercadoPagoGatewayAdapter implements PaymentGateway {
    * Verifica a assinatura HMAC-SHA256 do webhook, no formato descrito na doc
    * do Mercado Pago: header `x-signature` = "ts=<epoch>,v1=<hmac hex>",
    * calculado sobre o manifest `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`.
+   * O `data.id` entra no manifest em MINUSCULAS — a doc do Mercado Pago e um
+   * relato da propria comunidade (mercadopago/sdk-nodejs) confirmam que IDs
+   * alfanumericos (ex.: "ORD01JQ4S...") sao normalizados para lowercase antes
+   * do calculo do HMAC, mesmo que o `id` "de verdade" (usado em chamadas de
+   * API e no Inbox) preserve o case original.
    * Usa `timingSafeEqual` para nao vazar a assinatura por timing attack.
    */
   validarAssinaturaWebhook(rawBody: string, headers: Record<string, string | string[] | undefined>): boolean {
@@ -101,7 +106,7 @@ export class MercadoPagoGatewayAdapter implements PaymentGateway {
       return false;
     }
 
-    const manifest = `id:${dataId ?? ''};request-id:${requestId ?? ''};ts:${ts};`;
+    const manifest = `id:${dataId?.toLowerCase() ?? ''};request-id:${requestId ?? ''};ts:${ts};`;
     const expected = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
 
     const bufferEsperado = Buffer.from(expected);

@@ -4,9 +4,15 @@ import { MercadoPagoGatewayAdapter } from '../MercadoPagoGatewayAdapter';
 
 const SECRET = 'segredo-de-teste';
 
-function assinar(rawBody: string, requestId: string, secret = SECRET): { header: string; ts: string } {
+function assinar(
+  rawBody: string,
+  requestId: string,
+  secret = SECRET,
+  lowercaseId = true,
+): { header: string; ts: string } {
   const ts = String(Math.floor(Date.now() / 1000));
-  const dataId = (JSON.parse(rawBody) as { data?: { id?: string } })?.data?.id ?? '';
+  const rawDataId = (JSON.parse(rawBody) as { data?: { id?: string } })?.data?.id ?? '';
+  const dataId = lowercaseId ? rawDataId.toLowerCase() : rawDataId;
   const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
   const v1 = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
   return { header: `ts=${ts},v1=${v1}`, ts };
@@ -61,6 +67,20 @@ describe('MercadoPagoGatewayAdapter', () => {
 
     it('rejeita um x-signature malformado (sem ts/v1)', () => {
       const valido = adapter.validarAssinaturaWebhook(rawBody, { 'x-signature': 'formato=invalido', 'x-request-id': 'req-1' });
+      expect(valido).toBe(false);
+    });
+
+    it('aceita uma assinatura valida quando data.id tem letras maiusculas (normalizado para minusculas no manifest, conforme doc do Mercado Pago)', () => {
+      const rawBodyMaiusculo = JSON.stringify({ type: 'payment', data: { id: 'ORD01JQ4S4KY8HWQ6NA5PXB65B3D3' } });
+      const { header } = assinar(rawBodyMaiusculo, 'req-1');
+      const valido = adapter.validarAssinaturaWebhook(rawBodyMaiusculo, { 'x-signature': header, 'x-request-id': 'req-1' });
+      expect(valido).toBe(true);
+    });
+
+    it('rejeita quando a assinatura foi calculada com o id em maiusculas sem normalizar (prova que a normalizacao e necessaria)', () => {
+      const rawBodyMaiusculo = JSON.stringify({ type: 'payment', data: { id: 'ORD01JQ4S4KY8HWQ6NA5PXB65B3D3' } });
+      const { header } = assinar(rawBodyMaiusculo, 'req-1', SECRET, false);
+      const valido = adapter.validarAssinaturaWebhook(rawBodyMaiusculo, { 'x-signature': header, 'x-request-id': 'req-1' });
       expect(valido).toBe(false);
     });
   });
