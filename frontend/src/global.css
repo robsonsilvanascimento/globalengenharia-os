@@ -1,0 +1,147 @@
+/*
+ * Tokens de design do app. Antes deste arquivo cada um dos ~40 CSS do
+ * projeto definia sua propria cor "primaria"/cinza (chegavam a existir 9
+ * tons de azul diferentes) sem nenhuma fonte unica de verdade. Aqui a
+ * paleta e formalizada a partir das cores ja predominantes no app (slate +
+ * blue, no estilo Tailwind), para permitir consistencia sem reescrever
+ * tudo de uma vez: arquivos novos ou tocados passam a consumir var(--...)
+ * em vez de hex cru.
+ */
+:root {
+  /* Escala neutra (slate) */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  /* Escala de marca (blue) */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+
+  /* Cores semanticas de estado */
+  --color-success-50: #ecfdf5;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+
+  /* Cores de categoria (badges de status/area) */
+  --color-yellow-bg: #fef9c3;
+  --color-yellow-text: #a16207;
+  --color-purple-bg: #ede9fe;
+  --color-purple-text: #6d28d9;
+  --color-orange-bg: #ffedd5;
+  --color-orange-text: #c2410c;
+  --color-green-bg: #dcfce7;
+  --color-green-text: #15803d;
+  --color-cyan-bg: #cffafe;
+  --color-cyan-text: #0e7490;
+  --color-indigo-bg: #e0e7ff;
+  --color-indigo-text: #4338ca;
+  --color-amber-bg: #fef3c7;
+  --color-amber-text: #b45309;
+
+  /* Aliases semanticos — usar estes no dia a dia, as escalas acima
+     existem para os casos que precisam de um tom especifico. */
+  --color-bg: var(--color-slate-50);
+  --color-surface: #ffffff;
+  --color-border: var(--color-slate-200);
+  --color-text: var(--color-slate-800);
+  --color-text-muted: var(--color-slate-500);
+  --color-primary: var(--color-primary-600);
+  --color-primary-hover: var(--color-primary-700);
+  --color-primary-soft: var(--color-primary-100);
+
+  /* Tipografia */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Helvetica Neue', Arial,
+    sans-serif;
+  --font-size-xs: 0.78rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 1.875rem;
+
+  /* Espacamento (escala de 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Raio e sombra */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 6px 16px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.18);
+
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Foco visivel e consistente em toda a aplicacao, para acessibilidade de
+   teclado — sem isso cada componente teria que reinventar seu :focus. */
+:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 2px;
+}

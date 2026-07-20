@@ -2,21 +2,21 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .ui-form-field-label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--color-slate-700);
 }
 
 .ui-form-field-required {
-  color: #dc2626;
+  color: var(--color-danger-600);
   margin-left: 2px;
 }
 
 .ui-form-field-error {
-  font-size: 0.78rem;
-  color: #dc2626;
+  font-size: var(--font-size-xs);
+  color: var(--color-danger-600);
 }

@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { queryClient } from './lib/queryClient';
+import './global.css';
 
 async function prepare(): Promise<void> {
   if (import.meta.env.VITE_USE_MOCKS === 'true') {

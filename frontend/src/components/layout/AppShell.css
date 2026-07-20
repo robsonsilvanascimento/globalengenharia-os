@@ -12,8 +12,14 @@
 
 .app-shell-content {
   flex: 1;
-  padding: 24px;
-  background-color: #f8fafc;
+  padding: var(--space-6);
+  background-color: var(--color-bg);
   overflow-y: auto;
   scroll-behavior: smooth;
+}
+
+@media (max-width: 640px) {
+  .app-shell-content {
+    padding: var(--space-4);
+  }
 }

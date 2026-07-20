@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { useAuth } from '../../features/auth/useAuth';
 import { useMagneticHover } from '../ui/useMagneticHover';
 import './Sidebar.css';
@@ -9,13 +10,24 @@ interface NavItem {
 }
 
 /** Item de menu que flutua sutilmente em direção ao cursor antes do clique. */
-function MagneticNavLink({ to, end, label }: { to: string; end: boolean; label: string }) {
+function MagneticNavLink({
+  to,
+  end,
+  label,
+  onClick,
+}: {
+  to: string;
+  end: boolean;
+  label: string;
+  onClick: () => void;
+}) {
   const ref = useMagneticHover<HTMLAnchorElement>();
   return (
     <NavLink
       ref={ref}
       to={to}
       end={end}
+      onClick={onClick}
       className={({ isActive }) => (isActive ? 'app-sidebar-link app-sidebar-link-active' : 'app-sidebar-link')}
     >
       {label}
@@ -50,8 +62,14 @@ const ATENDENTE_ITEMS: NavItem[] = [
   { label: 'Atendimento Humano', to: '/atendimento-humano' },
 ];
 
+interface SidebarProps {
+  /** Em telas estreitas o menu vira um drawer off-canvas controlado por este flag. */
+  open: boolean;
+  onClose: () => void;
+}
+
 /** Left-hand navigation menu, filtered according to the current user's role. */
-export function Sidebar() {
+export function Sidebar({ open, onClose }: SidebarProps) {
   const { papel } = useAuth();
   const items = [
     ...COMMON_ITEMS,
@@ -62,14 +80,20 @@ export function Sidebar() {
   ];
 
   return (
-    <nav className="app-sidebar">
-      <ul className="app-sidebar-list">
-        {items.map((item) => (
-          <li key={item.to}>
-            <MagneticNavLink to={item.to} end={item.to === '/'} label={item.label} />
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <>
+      {open && <div className="app-sidebar-backdrop" onClick={onClose} aria-hidden="true" />}
+      <nav className={open ? 'app-sidebar app-sidebar-open' : 'app-sidebar'}>
+        <button type="button" className="app-sidebar-close" onClick={onClose} aria-label="Fechar menu">
+          <X size={20} />
+        </button>
+        <ul className="app-sidebar-list">
+          {items.map((item) => (
+            <li key={item.to}>
+              <MagneticNavLink to={item.to} end={item.to === '/'} label={item.label} onClick={onClose} />
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
   );
 }

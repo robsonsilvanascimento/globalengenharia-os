@@ -2,12 +2,12 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 0.78rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
-  transition: transform 0.15s ease;
+  transition: transform var(--transition-fast);
 }
 
 .ui-badge:hover {
@@ -16,57 +16,57 @@
 
 /* status */
 .ui-badge-blue {
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary-700);
 }
 
 .ui-badge-yellow {
-  background-color: #fef9c3;
-  color: #a16207;
+  background-color: var(--color-yellow-bg);
+  color: var(--color-yellow-text);
 }
 
 .ui-badge-purple {
-  background-color: #ede9fe;
-  color: #6d28d9;
+  background-color: var(--color-purple-bg);
+  color: var(--color-purple-text);
 }
 
 .ui-badge-orange {
-  background-color: #ffedd5;
-  color: #c2410c;
+  background-color: var(--color-orange-bg);
+  color: var(--color-orange-text);
 }
 
 .ui-badge-gray {
-  background-color: #e2e8f0;
-  color: #475569;
+  background-color: var(--color-slate-200);
+  color: var(--color-slate-600);
 }
 
 .ui-badge-green {
-  background-color: #dcfce7;
-  color: #15803d;
+  background-color: var(--color-green-bg);
+  color: var(--color-green-text);
 }
 
 .ui-badge-red {
-  background-color: #fee2e2;
-  color: #b91c1c;
+  background-color: var(--color-danger-50);
+  color: var(--color-danger-700);
 }
 
 /* area */
 .ui-badge-cyan {
-  background-color: #cffafe;
-  color: #0e7490;
+  background-color: var(--color-cyan-bg);
+  color: var(--color-cyan-text);
 }
 
 .ui-badge-indigo {
-  background-color: #e0e7ff;
-  color: #4338ca;
+  background-color: var(--color-indigo-bg);
+  color: var(--color-indigo-text);
 }
 
 .ui-badge-amber {
-  background-color: #fef3c7;
-  color: #b45309;
+  background-color: var(--color-amber-bg);
+  color: var(--color-amber-text);
 }
 
 .ui-badge-slate {
-  background-color: #e2e8f0;
-  color: #334155;
+  background-color: var(--color-slate-200);
+  color: var(--color-slate-700);
 }
