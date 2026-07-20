@@ -1,10 +1,26 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../features/auth/useAuth';
+import { useMagneticHover } from '../ui/useMagneticHover';
 import './Sidebar.css';
 
 interface NavItem {
   label: string;
   to: string;
+}
+
+/** Item de menu que flutua sutilmente em direção ao cursor antes do clique. */
+function MagneticNavLink({ to, end, label }: { to: string; end: boolean; label: string }) {
+  const ref = useMagneticHover<HTMLAnchorElement>();
+  return (
+    <NavLink
+      ref={ref}
+      to={to}
+      end={end}
+      className={({ isActive }) => (isActive ? 'app-sidebar-link app-sidebar-link-active' : 'app-sidebar-link')}
+    >
+      {label}
+    </NavLink>
+  );
 }
 
 const COMMON_ITEMS: NavItem[] = [{ label: 'Ordens de Serviço', to: '/' }];
@@ -50,15 +66,7 @@ export function Sidebar() {
       <ul className="app-sidebar-list">
         {items.map((item) => (
           <li key={item.to}>
-            <NavLink
-              to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) =>
-                isActive ? 'app-sidebar-link app-sidebar-link-active' : 'app-sidebar-link'
-              }
-            >
-              {item.label}
-            </NavLink>
+            <MagneticNavLink to={item.to} end={item.to === '/'} label={item.label} />
           </li>
         ))}
       </ul>
