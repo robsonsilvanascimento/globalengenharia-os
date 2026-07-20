@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Check, X } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333';
 
@@ -78,7 +79,7 @@ export function NpsRespostaPage() {
 
         {pageState === 'success' && (
           <div style={styles.feedbackBox}>
-            <div style={styles.successIcon}>✓</div>
+            <div style={styles.successIcon}><Check size={32} strokeWidth={3} /></div>
             <p style={styles.feedbackTitle}>Obrigado!</p>
             <p style={styles.feedbackText}>Sua avaliação foi registrada.</p>
           </div>
@@ -86,7 +87,7 @@ export function NpsRespostaPage() {
 
         {pageState === 'error' && (
           <div style={styles.feedbackBox}>
-            <div style={styles.errorIcon}>!</div>
+            <div style={styles.errorIcon}><X size={32} strokeWidth={3} /></div>
             <p style={styles.feedbackText}>{errorMessages[errorKind]}</p>
           </div>
         )}

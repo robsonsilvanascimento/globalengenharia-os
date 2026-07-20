@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { Table } from '../../components/ui/Table';
 import type { TableColumn } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
@@ -62,7 +63,7 @@ export function ClienteDetailPage() {
     <div className="cliente-detail-page">
       <div className="cliente-detail-header">
         <button type="button" className="cliente-detail-back" onClick={() => navigate('/clientes')}>
-          ← Voltar
+          <ArrowLeft size={16} /> Voltar
         </button>
         <h1 className="cliente-detail-title">{cliente.nome}</h1>
       </div>

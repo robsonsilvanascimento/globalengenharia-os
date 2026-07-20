@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { FormField } from '../../components/ui/FormField';
 import { ApiError, httpClient } from '../../lib/api/httpClient';
 import './RedefinirSenhaPage.css';
@@ -93,7 +94,7 @@ export function RedefinirSenhaPage() {
               aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
               tabIndex={-1}
             >
-              {mostrarSenha ? '🙈' : '👁️'}
+              {mostrarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
         </FormField>
@@ -117,7 +118,7 @@ export function RedefinirSenhaPage() {
               aria-label={mostrarConfirmarSenha ? 'Ocultar senha' : 'Mostrar senha'}
               tabIndex={-1}
             >
-              {mostrarConfirmarSenha ? '🙈' : '👁️'}
+              {mostrarConfirmarSenha ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
         </FormField>

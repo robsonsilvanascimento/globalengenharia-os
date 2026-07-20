@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react';
 import type { HistoricoStatusOS, Usuario } from '../../types/api';
 import { STATUS_LABELS } from '../../features/ordens-servico/statusTransitions';
 import './Timeline.css';
@@ -38,7 +39,7 @@ export function Timeline({ historico, usuarios = [] }: TimelineProps) {
             <div className="os-timeline-transition">
               <span>{STATUS_LABELS[item.status_anterior]}</span>
               <span className="os-timeline-arrow" aria-hidden="true">
-                →
+                <ArrowRight size={14} />
               </span>
               <span>{STATUS_LABELS[item.status_novo]}</span>
             </div>

@@ -11,13 +11,23 @@
 }
 
 .os-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   align-self: flex-start;
   background: none;
   border: none;
-  color: #2563eb;
+  color: var(--color-primary-600);
   font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
   padding: 0;
+  transition: gap var(--transition-fast), color var(--transition-fast);
+}
+
+.os-detail-back:hover {
+  gap: 10px;
+  color: var(--color-primary-700);
 }
 
 .os-detail-title-row {

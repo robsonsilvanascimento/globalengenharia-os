@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { httpClient, ApiError } from '../../lib/api/httpClient';
 import type {
   CategoriaServico,
@@ -366,7 +367,7 @@ export function OrdemServicoDetailPage() {
     <div className="os-detail-page">
       <div className="os-detail-header">
         <button type="button" className="os-detail-back" onClick={() => navigate('/')}>
-          ← Voltar
+          <ArrowLeft size={16} /> Voltar
         </button>
         <div className="os-detail-title-row">
           <h1 className="os-detail-title">{ordem.numero}</h1>

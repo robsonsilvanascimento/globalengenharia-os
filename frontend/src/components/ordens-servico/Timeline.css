@@ -9,9 +9,9 @@
 
 .os-timeline-item {
   display: flex;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eef2f6;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-slate-100);
 }
 
 .os-timeline-item:last-child {
@@ -23,8 +23,8 @@
   width: 10px;
   height: 10px;
   margin-top: 6px;
-  border-radius: 999px;
-  background-color: #2563eb;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-primary-600);
 }
 
 .os-timeline-content {
@@ -36,33 +36,34 @@
 .os-timeline-transition {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-slate-800);
 }
 
 .os-timeline-arrow {
-  color: #94a3b8;
+  display: inline-flex;
+  color: var(--color-slate-400);
 }
 
 .os-timeline-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--color-slate-500);
 }
 
 .os-timeline-meta-separator {
-  color: #cbd5e1;
+  color: var(--color-slate-300);
 }
 
 .os-timeline-observacao {
   margin: 0;
-  font-size: 0.9rem;
-  color: #334155;
+  font-size: var(--font-size-sm);
+  color: var(--color-slate-700);
 }
 
 .os-timeline-empty {
-  color: #64748b;
+  color: var(--color-slate-500);
 }
