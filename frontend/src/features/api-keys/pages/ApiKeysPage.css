@@ -58,8 +58,8 @@
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--color-green-bg);
+  color: var(--color-green-text);
 }
 
 .badge-inativo {
@@ -69,7 +69,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   background: var(--color-danger-50);
-  color: #991b1b;
+  color: var(--color-danger-700);
 }
 
 .sem-dados {
@@ -89,11 +89,11 @@
 
 .btn-revogar {
   background: var(--color-danger-50);
-  color: #991b1b;
+  color: var(--color-danger-700);
 }
 
 .btn-revogar:hover:not(:disabled) {
-  background: #fecaca;
+  background: var(--color-danger-100);
 }
 
 .btn-revogar:disabled {
@@ -204,13 +204,13 @@
 
 /* Modal de chave gerada */
 .api-key-alerta {
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
+  background: var(--color-orange-bg);
+  border: 1px solid var(--color-orange-text);
   border-radius: 6px;
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
   font-size: 0.875rem;
-  color: #92400e;
+  color: var(--color-amber-text);
 }
 
 .api-key-nome-label {
@@ -241,8 +241,8 @@
 
 .btn-copiar {
   padding: 0.25rem 0.75rem;
-  background: #e0e7ff;
-  color: #3730a3;
+  background: var(--color-indigo-bg);
+  color: var(--color-indigo-text);
   border: none;
   border-radius: 4px;
   font-size: 0.8125rem;
@@ -252,5 +252,5 @@
 }
 
 .btn-copiar:hover {
-  background: #c7d2fe;
+  background: var(--color-indigo-bg);
 }

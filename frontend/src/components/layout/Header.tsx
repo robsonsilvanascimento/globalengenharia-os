@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../../features/auth/useAuth';
+import { useTheme } from '../../lib/theme/useTheme';
 import { AlertasSino } from '../../features/alertas/components/AlertasSino';
 import './Header.css';
 
@@ -17,6 +18,7 @@ interface HeaderProps {
 /** Top bar showing the logged-in user's name/role and a logout action. */
 export function Header({ onMenuToggle }: HeaderProps) {
   const { usuario, papel, logout } = useAuth();
+  const { temaEfetivo, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   function handleLogout(): void {
@@ -45,6 +47,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
       </div>
 
       <div className="app-header-user">
+        <button
+          type="button"
+          className="app-header-theme-toggle"
+          onClick={toggleTheme}
+          aria-label={temaEfetivo === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+        >
+          {temaEfetivo === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         <AlertasSino />
         <span className="app-header-user-name">{usuario?.nome}</span>
         {papel && <span className="app-header-role-badge">{PAPEL_LABEL[papel] ?? papel}</span>}

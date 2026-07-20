@@ -36,7 +36,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(120deg, #e0e7ff, #f1f5f9, #dbeafe, #e0f2fe);
+  background: linear-gradient(120deg, #e0e7ff, var(--color-slate-100), var(--color-primary-100), #e0f2fe);
   background-size: 300% 300%;
   animation: login-page-bg-shift 18s ease infinite;
 }
@@ -45,10 +45,22 @@
   width: 100%;
   max-width: 380px;
   padding: 40px 36px;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 24px;
   box-shadow: 0 20px 45px rgba(30, 41, 59, 0.12), 0 2px 6px rgba(30, 41, 59, 0.06);
   animation: login-page-fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-color-scheme: dark) {
+  .login-page {
+    background: linear-gradient(120deg, var(--color-slate-900), #1e1b4b, #0c1a2e, #172a45);
+    background-size: 300% 300%;
+  }
+}
+
+:root[data-theme='dark'] .login-page {
+  background: linear-gradient(120deg, var(--color-slate-900), #1e1b4b, #0c1a2e, #172a45);
+  background-size: 300% 300%;
 }
 
 .login-page-logo {
@@ -63,7 +75,7 @@
   margin: 0 0 24px;
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-slate-900);
   text-align: center;
 }
 
@@ -71,7 +83,7 @@
   width: 100%;
   padding: 11px 14px;
   font-size: 0.92rem;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--color-slate-200);
   border-radius: 14px;
   outline: none;
   box-sizing: border-box;
@@ -79,7 +91,7 @@
 }
 
 .login-page-input:focus {
-  border-color: #2563eb;
+  border-color: var(--color-primary-600);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
   transform: translateY(-1px);
 }
@@ -131,7 +143,7 @@
 
 .login-page-forgot-link {
   font-size: 0.82rem;
-  color: #2563eb;
+  color: var(--color-primary-600);
   text-decoration: none;
   transition: opacity 0.15s ease;
 }
@@ -145,7 +157,7 @@
   display: block;
   margin-bottom: 16px;
   font-size: 0.85rem;
-  color: #dc2626;
+  color: var(--color-danger-600);
   animation: login-page-shake 0.4s ease;
 }
 
@@ -154,8 +166,8 @@
   padding: 12px;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #ffffff;
-  background-color: #2563eb;
+  color: var(--color-surface);
+  background-color: var(--color-primary-600);
   border: none;
   border-radius: 999px;
   cursor: pointer;

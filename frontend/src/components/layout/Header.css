@@ -60,6 +60,27 @@
   gap: var(--space-3);
 }
 
+.app-header-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: var(--color-slate-600);
+  background: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.app-header-theme-toggle:hover {
+  background-color: var(--color-slate-100);
+  color: var(--color-primary-600);
+  transform: rotate(-14deg);
+}
+
 .app-header-user-name {
   font-size: var(--font-size-sm);
   color: var(--color-slate-700);

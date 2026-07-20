@@ -33,13 +33,13 @@
 .cliente-detail-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-slate-900);
   margin: 0;
 }
 
 .cliente-detail-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-slate-200);
   border-radius: 10px;
   padding: 20px;
 }
@@ -54,7 +54,7 @@
 .cliente-detail-field dt {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-slate-500);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   margin-bottom: 4px;
@@ -62,13 +62,13 @@
 
 .cliente-detail-field dd {
   margin: 0;
-  color: #1e293b;
+  color: var(--color-slate-800);
 }
 
 .cliente-detail-section-title {
   font-size: 1.05rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-slate-800);
   margin: 0 0 12px 0;
 }
 
@@ -82,8 +82,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-slate-200);
   border-radius: 10px;
   padding: 16px 20px;
   min-width: 200px;
@@ -92,7 +92,7 @@
 .cliente-detail-summary-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-slate-500);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -100,5 +100,5 @@
 .cliente-detail-summary-value {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-slate-900);
 }

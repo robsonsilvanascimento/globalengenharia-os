@@ -7,11 +7,11 @@
 .laudos-head h1 {
   margin: 0 0 0.25rem;
   font-size: 1.5rem;
-  color: #1e2733;
+  color: var(--color-text);
 }
 .laudos-head p {
   margin: 0 0 1.25rem;
-  color: #55616f;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
   max-width: 70ch;
 }
@@ -28,7 +28,7 @@
   display: flex;
   flex-direction: column;
   background: var(--color-surface);
-  border: 1px solid #e2e6ec;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
   min-height: 520px;
@@ -38,8 +38,8 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 0.6rem 0.8rem;
   padding: 0.9rem;
-  border-bottom: 1px solid #e2e6ec;
-  background: #fbfcfe;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 .laudos-metadados label {
   display: flex;
@@ -47,7 +47,7 @@
   gap: 0.2rem;
   font-size: 0.72rem;
   font-weight: 600;
-  color: #55616f;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -58,13 +58,13 @@
 .laudos-metadados select,
 .laudos-metadados textarea {
   padding: 0.42rem 0.55rem;
-  border: 1px solid #d3dae6;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
   font-size: 0.88rem;
   font-weight: 400;
   text-transform: none;
   letter-spacing: normal;
-  color: #1e2733;
+  color: var(--color-text);
 }
 .laudos-meta-textarea {
   resize: vertical;
@@ -77,13 +77,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid #e2e6ec;
-  background: #f7f9fc;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-slate-50);
 }
 .laudos-editor-titulo {
   font-weight: 600;
   font-size: 0.85rem;
-  color: #34568b;
+  color: var(--color-primary-700);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -99,7 +99,7 @@
   font-family: inherit;
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #1e2733;
+  color: var(--color-text);
   min-height: 440px;
 }
 .laudos-textarea:focus {
@@ -107,17 +107,17 @@
 }
 .laudos-editor-rodape {
   padding: 0.4rem 0.9rem;
-  border-top: 1px solid #e2e6ec;
+  border-top: 1px solid var(--color-border);
   font-size: 0.75rem;
-  color: #8a94a2;
+  color: var(--color-text-muted);
   text-align: right;
 }
 
 /* Relatorio fotografico */
 .laudos-fotos {
-  border-top: 1px solid #e2e6ec;
+  border-top: 1px solid var(--color-border);
   padding: 0.9rem;
-  background: #fbfcfe;
+  background: var(--color-surface);
 }
 .laudos-fotos-cab {
   display: flex;
@@ -128,12 +128,12 @@
 .laudos-fotos-ajuda {
   margin: 0 0 0.6rem;
   font-size: 0.78rem;
-  color: #8a94a2;
+  color: var(--color-text-muted);
 }
 .laudos-fotos-erro {
   margin: 0 0 0.6rem;
   font-size: 0.8rem;
-  color: #c0392b;
+  color: var(--color-danger-600);
 }
 .laudos-fotos-grid {
   display: grid;
@@ -145,7 +145,7 @@
   flex-direction: column;
   gap: 0.35rem;
   background: var(--color-surface);
-  border: 1px solid #e2e6ec;
+  border: 1px solid var(--color-border);
   border-radius: 9px;
   padding: 0.5rem;
 }
@@ -153,12 +153,12 @@
   aspect-ratio: 4 / 3;
   border-radius: 6px;
   overflow: hidden;
-  background: #eef2f8;
+  background: var(--color-slate-100);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.72rem;
-  color: #8a94a2;
+  color: var(--color-text-muted);
 }
 .laudos-foto-thumb img {
   width: 100%;
@@ -166,7 +166,7 @@
   object-fit: cover;
 }
 .laudos-foto-legenda {
-  border: 1px solid #d3dae6;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 0.35rem 0.45rem;
   font-size: 0.8rem;
@@ -179,7 +179,7 @@
 /* Biblioteca */
 .laudos-biblioteca {
   background: var(--color-surface);
-  border: 1px solid #e2e6ec;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 1rem;
   max-height: 78vh;
@@ -196,12 +196,12 @@
 .laudos-filtros select,
 .laudos-filtros input {
   padding: 0.5rem 0.6rem;
-  border: 1px solid #d3dae6;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.88rem;
 }
 .laudos-info {
-  color: #8a94a2;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
   padding: 0.5rem 0;
 }
@@ -214,10 +214,10 @@
   gap: 0.7rem;
 }
 .laudos-trecho {
-  border: 1px solid #e9edf3;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 0.7rem 0.8rem;
-  background: #fbfcfe;
+  background: var(--color-surface);
 }
 .laudos-trecho-cab {
   display: flex;
@@ -229,11 +229,11 @@
 .laudos-trecho-assunto {
   font-weight: 600;
   font-size: 0.88rem;
-  color: #1e2733;
+  color: var(--color-text);
 }
 .laudos-trecho-norma {
   font-size: 0.72rem;
-  color: #34568b;
+  color: var(--color-primary-700);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -242,8 +242,8 @@
   font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #a9700a;
-  background: #fbefd6;
+  color: var(--color-amber-text);
+  background: var(--color-amber-bg);
   border-radius: 999px;
   padding: 2px 8px;
   margin-bottom: 0.35rem;
@@ -252,7 +252,7 @@
   margin: 0.2rem 0 0.55rem;
   font-size: 0.82rem;
   line-height: 1.45;
-  color: #46536a;
+  color: var(--color-slate-600);
 }
 .laudos-trecho-acoes {
   display: flex;
@@ -262,7 +262,7 @@
 
 /* Botoes */
 .btn-inserir {
-  background: #34568b;
+  background: var(--color-primary-700);
   color: var(--color-surface);
   border: none;
   border-radius: 8px;
@@ -272,10 +272,10 @@
   cursor: pointer;
 }
 .btn-inserir:hover {
-  background: #24406c;
+  background: var(--color-primary-700);
 }
 .btn-primario {
-  background: #0b5fff;
+  background: var(--color-primary-600);
   color: var(--color-surface);
   border: none;
   border-radius: 8px;
@@ -289,9 +289,9 @@
   cursor: default;
 }
 .btn-secundario {
-  background: #eef2f8;
-  color: #46536a;
-  border: 1px solid #d3dae6;
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.4rem 0.75rem;
   font-size: 0.82rem;
@@ -304,14 +304,14 @@
 .btn-link {
   background: none;
   border: none;
-  color: #34568b;
+  color: var(--color-primary-700);
   font-size: 0.8rem;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
 }
 .btn-link-perigo {
-  color: #c0392b;
+  color: var(--color-danger-600);
 }
 
 /* Modal */
@@ -344,14 +344,14 @@
   gap: 0.3rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #46536a;
+  color: var(--color-slate-600);
   margin-bottom: 0.8rem;
 }
 .laudos-modal input,
 .laudos-modal select,
 .laudos-modal textarea {
   padding: 0.5rem 0.6rem;
-  border: 1px solid #d3dae6;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.9rem;
   font-family: inherit;

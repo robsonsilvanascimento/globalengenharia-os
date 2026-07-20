@@ -45,9 +45,21 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(120deg, #e0e7ff, #f1f5f9, #dbeafe, #e0f2fe);
+  background: linear-gradient(120deg, #e0e7ff, var(--color-slate-100), var(--color-primary-100), #e0f2fe);
   background-size: 300% 300%;
   animation: auth-page-bg-shift 18s ease infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .auth-page {
+    background: linear-gradient(120deg, var(--color-slate-900), #1e1b4b, #0c1a2e, #172a45);
+    background-size: 300% 300%;
+  }
+}
+
+:root[data-theme='dark'] .auth-page {
+  background: linear-gradient(120deg, var(--color-slate-900), #1e1b4b, #0c1a2e, #172a45);
+  background-size: 300% 300%;
 }
 
 .auth-page-form {
@@ -153,7 +165,7 @@
   padding: 12px;
   font-size: 0.92rem;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--color-surface);
   background-color: var(--color-primary-600);
   border: none;
   border-radius: var(--radius-pill);

@@ -33,6 +33,7 @@
   --color-success-500: #10b981;
   --color-success-600: #059669;
   --color-danger-50: #fef2f2;
+  --color-danger-100: #fecaca;
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
   --color-danger-700: #b91c1c;
@@ -65,6 +66,20 @@
   --color-primary: var(--color-primary-600);
   --color-primary-hover: var(--color-primary-700);
   --color-primary-soft: var(--color-primary-100);
+
+  /* Cor do "color-scheme" nativo do navegador (scrollbar, campos de
+     formulario, etc.) — muda junto com o tema, mesmo em elementos que a
+     gente nao estiliza diretamente. */
+  color-scheme: light;
+
+  /* Chrome do sidebar: SEMPRE escuro, em ambos os temas (mesmo padrao de
+     apps como Linear/Vercel — a barra de navegacao nao "inverte"). Por
+     isso sao tokens proprios, dissociados da escala slate reversivel
+     abaixo, e nunca sao redefinidos nos blocos de tema escuro. */
+  --sidebar-bg: #0f172a;
+  --sidebar-bg-hover: #1e293b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-text-hover: #ffffff;
 
   /* Tipografia */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', 'Helvetica Neue', Arial,
@@ -144,4 +159,149 @@ textarea {
 :focus-visible {
   outline: 2px solid var(--color-primary-400);
   outline-offset: 2px;
+}
+
+/*
+ * Tema escuro. A escala slate e um espectro perceptualmente uniforme de
+ * claro a escuro — inverte-la (50<->900, 100<->800, ...) e o motivo dela
+ * ser numerica, e converte automaticamente quase todo o app (que consome
+ * slate-* para fundo claro + texto escuro) para fundo escuro + texto
+ * claro, sem precisar tocar arquivo por arquivo. As familias saturadas
+ * (primary/danger/success/warning 400-700, usadas em botoes/textos com
+ * preenchimento solido) ficam como estao — uma cor solida ja funciona nos
+ * dois temas. So os tons "lavados" (*-50/*-100/*-soft, fundos claros de
+ * badge/alerta) ganham uma versao escura combinada com o texto correspondente,
+ * senao o texto escuro original ficaria ilegivel sobre o fundo escurecido.
+ *
+ * Aplica em dois niveis: a media query cobre quem nunca escolheu um tema
+ * (segue o SO); o atributo data-theme (escrito pelo themeStore) tem
+ * especificidade maior e sempre vence quando o usuario escolheu
+ * explicitamente, em qualquer direcao.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-slate-50: #0f172a;
+    --color-slate-100: #1e293b;
+    --color-slate-200: #334155;
+    --color-slate-300: #475569;
+    --color-slate-400: #64748b;
+    --color-slate-500: #94a3b8;
+    --color-slate-600: #cbd5e1;
+    --color-slate-700: #e2e8f0;
+    --color-slate-800: #f1f5f9;
+    --color-slate-900: #f8fafc;
+
+    --color-surface: #1a2432;
+
+    --color-primary-soft: #1e3a5f;
+    --color-primary-100: #1e3a5f;
+    --color-primary-50: #172a45;
+
+    --color-yellow-bg: #423608;
+    --color-yellow-text: #fde047;
+    --color-purple-bg: #2e1a47;
+    --color-purple-text: #c4b5fd;
+    --color-orange-bg: #431a06;
+    --color-orange-text: #fdba74;
+    --color-green-bg: #0f2e1c;
+    --color-green-text: #86efac;
+    --color-cyan-bg: #072e33;
+    --color-cyan-text: #67e8f9;
+    --color-indigo-bg: #1e1b4b;
+    --color-indigo-text: #a5b4fc;
+    --color-amber-bg: #451a03;
+    --color-amber-text: #fcd34d;
+    --color-danger-50: #3d1210;
+    --color-danger-100: #5c1a17;
+    --color-success-50: #052e1f;
+    --color-warning-50: #422a06;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-slate-50: #0f172a;
+  --color-slate-100: #1e293b;
+  --color-slate-200: #334155;
+  --color-slate-300: #475569;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-900: #f8fafc;
+
+  --color-surface: #1a2432;
+
+  --color-primary-soft: #1e3a5f;
+  --color-primary-100: #1e3a5f;
+  --color-primary-50: #172a45;
+
+  --color-yellow-bg: #423608;
+  --color-yellow-text: #fde047;
+  --color-purple-bg: #2e1a47;
+  --color-purple-text: #c4b5fd;
+  --color-orange-bg: #431a06;
+  --color-orange-text: #fdba74;
+  --color-green-bg: #0f2e1c;
+  --color-green-text: #86efac;
+  --color-cyan-bg: #072e33;
+  --color-cyan-text: #67e8f9;
+  --color-indigo-bg: #1e1b4b;
+  --color-indigo-text: #a5b4fc;
+  --color-amber-bg: #451a03;
+  --color-amber-text: #fcd34d;
+  --color-danger-50: #3d1210;
+  --color-danger-100: #5c1a17;
+  --color-success-50: #052e1f;
+  --color-warning-50: #422a06;
+}
+
+/* Reafirma claro quando o usuario escolhe explicitamente, mesmo com o SO
+   em modo escuro — a especificidade do atributo vence a media query. */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+
+  --color-surface: #ffffff;
+
+  --color-primary-soft: #dbeafe;
+  --color-primary-100: #dbeafe;
+  --color-primary-50: #eff6ff;
+
+  --color-yellow-bg: #fef9c3;
+  --color-yellow-text: #a16207;
+  --color-purple-bg: #ede9fe;
+  --color-purple-text: #6d28d9;
+  --color-orange-bg: #ffedd5;
+  --color-orange-text: #c2410c;
+  --color-green-bg: #dcfce7;
+  --color-green-text: #15803d;
+  --color-cyan-bg: #cffafe;
+  --color-cyan-text: #0e7490;
+  --color-indigo-bg: #e0e7ff;
+  --color-indigo-text: #4338ca;
+  --color-amber-bg: #fef3c7;
+  --color-amber-text: #b45309;
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fecaca;
+  --color-success-50: #ecfdf5;
+  --color-warning-50: #fffbeb;
+}
+
+body {
+  transition: background-color var(--transition-base), color var(--transition-base);
 }

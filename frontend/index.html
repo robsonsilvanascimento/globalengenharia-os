@@ -5,6 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Global Engenharia — Sistema de Ordens de Serviço</title>
+    <script>
+      // Aplica o tema salvo ANTES do primeiro paint, pra nao piscar
+      // claro->escuro (ou vice-versa) enquanto o React ainda nao montou.
+      // Precisa ficar em sync com a chave lida por themeStore.ts.
+      (function () {
+        try {
+          var tema = localStorage.getItem('tema');
+          if (tema === 'light' || tema === 'dark') {
+            document.documentElement.setAttribute('data-theme', tema);
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
