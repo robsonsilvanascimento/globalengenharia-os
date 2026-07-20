@@ -1,0 +1,156 @@
+---
+# Traducao do guia manual em docs/primeiro-deploy.md pra um playbook idempotente.
+# Mesmos passos, mesma ordem — nada de novo foi inventado sobre a VPS real,
+# só automatiza o que ja estava documentado como comandos manuais.
+#
+# Uso:
+#   ansible-playbook -i inventory.ini site.yml                 # tudo, exceto SSL/migrations
+#   ansible-playbook -i inventory.ini site.yml --tags ssl       # so emissao de certificado (rodar 1x, DNS ja apontando)
+#   ansible-playbook -i inventory.ini site.yml --tags migrations # so as migrations iniciais do banco
+#
+# SSL e migrations ficam fora do "run" padrao de proposito: dependem de estado
+# externo (DNS propagado, banco ja de pe) que so quem esta rodando sabe se ja
+# esta pronto — rodar cego demais aqui e mais arriscado que documentar o passo.
+
+- name: Provisionamento inicial da VPS (docs/primeiro-deploy.md, passos 1, 2, 4, 8)
+  hosts: vps
+  become: true
+  vars:
+    deploy_user: deploy
+    app_dir: /opt/globalengenharia
+
+  tasks:
+    - name: Atualizar pacotes do sistema
+      apt:
+        update_cache: true
+        upgrade: dist
+      tags: [provision]
+
+    - name: Instalar dependencias (docker, git, curl, wget, ufw)
+      apt:
+        name:
+          - docker.io
+          - docker-compose-plugin
+          - git
+          - curl
+          - wget
+          - ufw
+        state: present
+      tags: [provision]
+
+    - name: Habilitar e iniciar o Docker
+      systemd:
+        name: docker
+        enabled: true
+        state: started
+      tags: [provision]
+
+    - name: Criar usuario de deploy (sem senha de sudo, so grupo docker)
+      user:
+        name: "{{ deploy_user }}"
+        shell: /bin/bash
+        groups: docker
+        append: true
+        create_home: true
+      tags: [provision]
+
+    - name: Adicionar chave publica SSH do GitHub Actions ao usuario de deploy
+      authorized_key:
+        user: "{{ deploy_user }}"
+        key: "{{ deploy_ssh_public_key }}"
+        state: present
+      when: deploy_ssh_public_key is defined and deploy_ssh_public_key != "COLE_A_CHAVE_PUBLICA_AQUI"
+      tags: [provision]
+
+    - name: Clonar (ou atualizar) o repositorio
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+      become_user: "{{ deploy_user }}"
+      when: repo_url is defined and not repo_url.endswith("SEU_ORG/SEU_REPO.git")
+      tags: [provision]
+
+    - name: Garantir dono correto dos arquivos do projeto
+      file:
+        path: "{{ app_dir }}"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        recurse: true
+      tags: [provision]
+
+    - name: Copiar .env.example para .env (SO se .env ainda nao existir — nunca sobrescreve)
+      copy:
+        src: "{{ app_dir }}/.env.example"
+        dest: "{{ app_dir }}/.env"
+        remote_src: true
+        force: false
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+      tags: [provision]
+
+    - name: "AVISO: preencher .env com valores reais (nao automatizado de proposito)"
+      debug:
+        msg: >
+          O .env foi copiado do .env.example mas continua com placeholders.
+          Edite manualmente {{ app_dir }}/.env (senha do Postgres, Redis,
+          JWT_SECRET, dominios) antes de subir os servicos — ver secao 3 de
+          docs/primeiro-deploy.md pras variaveis minimas obrigatorias.
+      tags: [provision]
+
+    - name: Firewall — politica padrao e portas liberadas (ssh, http, https)
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+      tags: [provision, firewall]
+
+    - name: Firewall — permitir saida
+      ufw:
+        direction: outgoing
+        policy: allow
+      tags: [provision, firewall]
+
+    - name: "Firewall — liberar portas: {{ item }}"
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "22"
+        - "80"
+        - "443"
+      tags: [provision, firewall]
+
+    - name: Subir postgres, redis, backend e frontend (sem nginx/SSL ainda)
+      command: docker compose -f docker-compose.prod.yml up -d postgres redis backend frontend
+      args:
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      tags: [never, deploy]  # so roda com --tags deploy, depois do .env preenchido de verdade
+
+    - name: Rodar migrations iniciais do Prisma
+      command: docker compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy
+      args:
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      tags: [never, migrations]  # so roda com --tags migrations, depois do backend de pe
+
+    - name: Emitir certificado SSL (Let's Encrypt / certbot) — requer DNS ja apontando
+      command: >
+        docker compose -f docker-compose.prod.yml run --rm certbot
+        certonly --webroot -w /var/www/certbot
+        -d {{ app_domain }} -d {{ api_domain }}
+        --email {{ letsencrypt_email }} --agree-tos --no-eff-email
+      args:
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      when: app_domain is defined and api_domain is defined and letsencrypt_email is defined
+      tags: [never, ssl]  # so roda com --tags ssl
+
+    - name: Subir nginx com SSL
+      command: docker compose -f docker-compose.prod.yml up -d nginx certbot
+      args:
+        chdir: "{{ app_dir }}"
+      become_user: "{{ deploy_user }}"
+      tags: [never, ssl]

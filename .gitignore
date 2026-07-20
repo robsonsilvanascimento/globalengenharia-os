@@ -50,3 +50,7 @@ Thumbs.db
 data/
 postgres_data/
 redis_data/
+
+# Ansible: inventory real (IP/segredos da VPS) nunca vai pro repo
+ansible/inventory.ini
+*.retry

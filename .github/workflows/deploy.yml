@@ -108,7 +108,13 @@ jobs:
             ' || { echo "ERRO: backend nao respondeu em 60s"; exit 1; }
 
             echo "==> [5/6] Executando migrations Prisma..."
-            docker compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy
+            # O schema real ja foi aplicado no passo [3/6] pelo docker-entrypoint.sh
+            # (prisma db push, mecanismo oficial de producao). Este passo so
+            # comeca a registrar o historico de migrations formalmente; nao
+            # bloqueia o deploy se ainda faltar rodar o resolve --applied
+            # unico de adocao (ver backend/prisma/migrations-legacy/README.md).
+            docker compose -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy || \
+              echo "AVISO: 'prisma migrate deploy' nao aplicou (provavelmente falta rodar, uma unica vez, 'prisma migrate resolve --applied 20260720221023_baseline_inicial' no backend em producao — ver backend/prisma/migrations-legacy/README.md). O deploy continua normalmente, pois o schema ja foi aplicado via db push no passo anterior."
 
             echo "==> [6/6] Limpeza de imagens orfas..."
             docker system prune -f --volumes=false

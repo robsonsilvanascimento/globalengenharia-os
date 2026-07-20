@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-seed
+storage
+.env
+.env.*
+!.env.example
+*.log
+.git

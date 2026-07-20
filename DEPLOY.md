@@ -123,6 +123,18 @@ O schema é reaplicado automaticamente (mudanças aditivas, sem perda de dados).
 > - O `backend` roda como **réplica única** (ele é quem aplica o schema no
 >   boot). Não escale o serviço `backend` horizontalmente sem antes migrar
 >   para um fluxo de migração com lock.
+> - **Passo único de adoção do histórico de migrations** (rode uma vez, na
+>   VPS, antes do próximo deploy — não precisa repetir depois):
+>   ```bash
+>   docker compose -f docker-compose.prod.yml exec backend \
+>     npx prisma migrate resolve --applied 20260720221023_baseline_inicial
+>   ```
+>   Isso não muda nada no banco — só avisa o Prisma que o schema atual já
+>   corresponde à migration de baseline, pra ele parar de tentar recriá-la.
+>   Sem esse passo, o `prisma migrate deploy` do deploy automático mostra um
+>   aviso (não bloqueia o deploy, o `db push` continua aplicando o schema
+>   normalmente) até você rodar isso uma vez. Detalhes em
+>   `backend/prisma/migrations-legacy/README.md`.
 
 ## 9. Integrações externas (quando for ativar)
 
