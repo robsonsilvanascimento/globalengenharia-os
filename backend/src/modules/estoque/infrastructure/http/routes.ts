@@ -10,10 +10,10 @@ const pecaIdParams = z.object({
 });
 
 const criarPecaBody = z.object({
-  codigo: z.string().min(1),
-  nome: z.string().min(1),
-  descricao: z.string().optional(),
-  unidade: z.string().optional(),
+  codigo: z.string().min(1).max(50),
+  nome: z.string().min(1).max(200),
+  descricao: z.string().max(1000).optional(),
+  unidade: z.string().max(20).optional(),
   preco_unitario: z.number().positive(),
   estoque_atual: z.number().optional(),
   estoque_minimo: z.number().optional(),
@@ -21,10 +21,10 @@ const criarPecaBody = z.object({
 
 const atualizarPecaBody = z
   .object({
-    codigo: z.string().min(1).optional(),
-    nome: z.string().min(1).optional(),
-    descricao: z.string().optional(),
-    unidade: z.string().optional(),
+    codigo: z.string().min(1).max(50).optional(),
+    nome: z.string().min(1).max(200).optional(),
+    descricao: z.string().max(1000).optional(),
+    unidade: z.string().max(20).optional(),
     preco_unitario: z.number().positive().optional(),
     estoque_atual: z.number().optional(),
     estoque_minimo: z.number().optional(),
@@ -42,19 +42,19 @@ const listQuerySchema = z.object({
     .enum(['true', 'false'])
     .optional()
     .transform((v) => (v === undefined ? undefined : v === 'true')),
-  search: z.string().optional(),
+  search: z.string().max(200).optional(),
 });
 
 const entradaBody = z.object({
   quantidade: z.number().positive(),
   preco_unitario: z.number().positive().optional(),
   precoUnitario: z.number().positive().optional(),
-  observacao: z.string().optional(),
+  observacao: z.string().max(2000).optional(),
 });
 
 const ajusteBody = z.object({
   novoEstoque: z.number().min(0),
-  observacao: z.string().optional(),
+  observacao: z.string().max(2000).optional(),
 });
 
 const movimentacoesQuerySchema = z.object({

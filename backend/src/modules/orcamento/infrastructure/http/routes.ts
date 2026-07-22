@@ -13,19 +13,19 @@ import { ObterOrcamentoUseCase } from '../../application/ObterOrcamentoUseCase';
 import { ResponderOrcamentoUseCase } from '../../application/ResponderOrcamentoUseCase';
 
 const osIdParams = z.object({ id: z.string().uuid() });
-const tokenParams = z.object({ token: z.string().min(32) });
+const tokenParams = z.object({ token: z.string().min(32).max(255) });
 const responderBody = z.object({ decisao: z.enum(['aprovar', 'recusar']) });
 
 const criarOrcamentoBody = z.object({
   itens: z
     .array(
       z.object({
-        descricao: z.string().min(1),
+        descricao: z.string().min(1).max(500),
         valor: z.number().positive(),
       }),
     )
     .min(1),
-  observacao: z.string().optional(),
+  observacao: z.string().max(2000).optional(),
 });
 
 export interface OrcamentoRoutesDeps {

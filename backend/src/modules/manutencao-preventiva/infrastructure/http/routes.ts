@@ -17,7 +17,7 @@ const criarBodySchema = z.object({
 });
 
 const realizadaBodySchema = z.object({
-  observacao: z.string().optional(),
+  observacao: z.string().max(2000).optional(),
 });
 
 const atualizarBodySchema = z.object({

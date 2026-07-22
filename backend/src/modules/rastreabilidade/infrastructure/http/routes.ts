@@ -14,13 +14,13 @@ const osIdParams = z.object({ id: z.string().uuid() });
 const docIdParams = z.object({ id: z.string().uuid(), docId: z.string().uuid() });
 
 const registrarComponenteBody = z.object({
-  nome: z.string().min(1),
-  fabricante: z.string().optional(),
-  modelo: z.string().optional(),
-  numero_serie: z.string().optional(),
-  codigo_barras: z.string().optional(),
+  nome: z.string().min(1).max(200),
+  fabricante: z.string().max(200).optional(),
+  modelo: z.string().max(200).optional(),
+  numero_serie: z.string().max(100).optional(),
+  codigo_barras: z.string().max(100).optional(),
   garantia_meses: z.number().int().min(1).optional(),
-  observacoes: z.string().optional(),
+  observacoes: z.string().max(2000).optional(),
 });
 
 const TIPOS_DOCUMENTO = [
@@ -96,12 +96,14 @@ export function registerRastreabilidadeRoutes(
   });
 
   const adicionarDocumentoBody = z.object({
-    nome: z.string().min(1),
+    nome: z.string().min(1).max(200),
     tipo_documento: z.enum(TIPOS_DOCUMENTO),
     componente_instalado_id: z.string().uuid().optional(),
-    mime_type: z.string().min(1),
-    nome_arquivo: z.string().min(1),
-    // conteudo do arquivo em base64
+    mime_type: z.string().min(1).max(100),
+    nome_arquivo: z.string().min(1).max(255),
+    // conteudo do arquivo em base64 — sem .max() aqui de proposito: ja e limitado
+    // pelo bodyLimit padrao do Fastify (1MB por request), suficiente pra nao
+    // precisar de um segundo limite especifico deste campo.
     conteudo_base64: z.string().min(1),
   });
 

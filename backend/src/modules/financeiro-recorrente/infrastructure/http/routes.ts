@@ -24,15 +24,15 @@ const listarContasQuery = z.object({
 
 const criarContaBody = z.object({
   cliente_id: z.string().uuid(),
-  descricao: z.string().min(1),
+  descricao: z.string().min(1).max(500),
   valor: z.number().positive(),
   vencimento_em: z.string().datetime(),
-  observacao: z.string().nullable().optional(),
+  observacao: z.string().max(2000).nullable().optional(),
 });
 
 const baixaBody = z.object({
   valor_pago: z.number().positive().optional(),
-  forma_pagamento: z.string().nullable().optional(),
+  forma_pagamento: z.string().max(50).nullable().optional(),
   pago_em: z.string().datetime().optional(),
 });
 
@@ -43,7 +43,7 @@ const listarContratosQuery = z.object({
 
 const criarContratoBody = z.object({
   cliente_id: z.string().uuid(),
-  descricao: z.string().min(1),
+  descricao: z.string().min(1).max(500),
   valor: z.number().positive(),
   periodicidade: z.enum(['semanal', 'mensal', 'bimestral', 'trimestral', 'semestral', 'anual']),
   data_inicio: z.string().datetime(),

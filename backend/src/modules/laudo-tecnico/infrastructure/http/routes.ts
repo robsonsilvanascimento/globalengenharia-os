@@ -12,29 +12,29 @@ import { AdicionarFotoLaudoUseCase } from '../../application/AdicionarFotoLaudoU
 import { CATEGORIAS_TRECHO } from '../seed/trechos-normativos.seed';
 
 const listarQuery = z.object({
-  categoria: z.string().optional(),
-  norma: z.string().optional(),
-  busca: z.string().optional(),
+  categoria: z.string().max(150).optional(),
+  norma: z.string().max(150).optional(),
+  busca: z.string().max(200).optional(),
 });
 
 const idParams = z.object({ id: z.string().uuid() });
 
 const criarBody = z.object({
-  norma: z.string().min(1),
-  item: z.string().optional(),
-  categoria: z.string().min(1),
-  assunto: z.string().min(1),
-  texto: z.string().min(1),
+  norma: z.string().min(1).max(150),
+  item: z.string().max(100).optional(),
+  categoria: z.string().min(1).max(150),
+  assunto: z.string().min(1).max(300),
+  texto: z.string().min(1).max(20000),
   item_verificar: z.boolean().optional(),
 });
 
 const atualizarBody = z
   .object({
-    norma: z.string().min(1).optional(),
-    item: z.string().nullable().optional(),
-    categoria: z.string().min(1).optional(),
-    assunto: z.string().min(1).optional(),
-    texto: z.string().min(1).optional(),
+    norma: z.string().min(1).max(150).optional(),
+    item: z.string().max(100).nullable().optional(),
+    categoria: z.string().min(1).max(150).optional(),
+    assunto: z.string().min(1).max(300).optional(),
+    texto: z.string().min(1).max(20000).optional(),
     item_verificar: z.boolean().optional(),
     ativo: z.boolean().optional(),
   })
@@ -46,26 +46,26 @@ const fotoIdParams = z.object({ id: z.string().uuid(), fotoId: z.string().uuid()
 
 const adicionarFotoBody = z.object({
   base64: z.string().min(1),
-  mime_type: z.string().min(1),
-  legenda: z.string().nullable().optional(),
+  mime_type: z.string().min(1).max(100),
+  legenda: z.string().max(500).nullable().optional(),
 });
 
 const atualizarFotoBody = z.object({
-  legenda: z.string().nullable().optional(),
+  legenda: z.string().max(500).nullable().optional(),
 });
 
 const salvarLaudoBody = z.object({
   id: z.string().uuid().optional(),
   ordem_servico_id: z.string().uuid().nullable().optional(),
-  titulo: z.string().min(1),
-  subtitulo: z.string().nullable().optional(),
-  tipo: z.string().min(1),
-  cliente_nome: z.string().nullable().optional(),
-  normas_aplicaveis: z.string().nullable().optional(),
-  conteudo: z.string().min(1),
-  responsavel_nome: z.string().nullable().optional(),
-  responsavel_crea: z.string().nullable().optional(),
-  art_numero: z.string().nullable().optional(),
+  titulo: z.string().min(1).max(300),
+  subtitulo: z.string().max(300).nullable().optional(),
+  tipo: z.string().min(1).max(100),
+  cliente_nome: z.string().max(200).nullable().optional(),
+  normas_aplicaveis: z.string().max(2000).nullable().optional(),
+  conteudo: z.string().min(1).max(50000),
+  responsavel_nome: z.string().max(200).nullable().optional(),
+  responsavel_crea: z.string().max(50).nullable().optional(),
+  art_numero: z.string().max(50).nullable().optional(),
 });
 
 export interface LaudoTecnicoRoutesDeps {

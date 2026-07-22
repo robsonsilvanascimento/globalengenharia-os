@@ -59,22 +59,22 @@ const historicoQuerySchema = z.object({
 const criarOrdemServicoBodySchema = z.object({
   cliente_id: z.string().uuid(),
   categoria_servico_id: z.string().uuid(),
-  descricao_problema: z.string().min(1),
-  endereco_atendimento: z.string().optional(),
+  descricao_problema: z.string().min(1).max(5000),
+  endereco_atendimento: z.string().max(500).optional(),
   prioridade: prioridadeSchema.optional(),
   tipo_chamado: z.enum(['emergencia', 'servico']).optional(),
 });
 
 const atualizarOrdemServicoBodySchema = z.object({
-  descricao_problema: z.string().min(1).optional(),
-  endereco_atendimento: z.string().optional(),
+  descricao_problema: z.string().min(1).max(5000).optional(),
+  endereco_atendimento: z.string().max(500).optional(),
   prioridade: prioridadeSchema.optional(),
   data_agendada: z.coerce.date().optional(),
 });
 
 const atualizarStatusBodySchema = z.object({
   status: statusSchema,
-  observacao: z.string().optional(),
+  observacao: z.string().max(2000).optional(),
 });
 
 const atribuirTecnicoBodySchema = z.object({

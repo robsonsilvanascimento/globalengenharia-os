@@ -9,11 +9,11 @@ import { authenticate, requireRole } from '../../../../shared/http/middlewares/a
 const osIdParams = z.object({ id: z.string().uuid() });
 
 const registrarPendenciaBody = z.object({
-  observacao: z.string().min(1),
+  observacao: z.string().min(1).max(2000),
   fotos: z
     .array(
       z.object({
-        mime_type: z.string(),
+        mime_type: z.string().min(1).max(100),
         base64: z.string().min(1),
       }),
     )

@@ -15,7 +15,7 @@ const osIdParams = z.object({ id: z.string().uuid() });
 const adicionarFotoBody = z.object({
   mime_type: z.enum(['image/jpeg', 'image/png']),
   base64: z.string().min(1),
-  legenda: z.string().optional(),
+  legenda: z.string().max(500).optional(),
   momento: z.enum(['antes', 'depois']).optional(),
 });
 

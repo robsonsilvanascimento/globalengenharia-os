@@ -12,16 +12,16 @@ const listQuerySchema = z.object({
 });
 
 const criarFaqEntryBodySchema = z.object({
-  pergunta: z.string().min(1),
-  resposta: z.string().min(1),
-  tags: z.string().optional(),
+  pergunta: z.string().min(1).max(500),
+  resposta: z.string().min(1).max(5000),
+  tags: z.string().max(500).optional(),
 });
 
 const atualizarFaqEntryBodySchema = z
   .object({
-    pergunta: z.string().min(1).optional(),
-    resposta: z.string().min(1).optional(),
-    tags: z.string().nullable().optional(),
+    pergunta: z.string().min(1).max(500).optional(),
+    resposta: z.string().min(1).max(5000).optional(),
+    tags: z.string().max(500).nullable().optional(),
     ativo: z.boolean().optional(),
   })
   .refine((body) => Object.keys(body).length > 0, {

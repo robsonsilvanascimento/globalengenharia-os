@@ -4,8 +4,8 @@ import { authenticate, requireRole } from '../../../../shared/http/middlewares/a
 import type { AuditLogRepository } from '../../../../shared/infra/auditoria/AuditLogService';
 
 const querySchema = z.object({
-  entidade: z.string().optional(),
-  entidade_id: z.string().optional(),
+  entidade: z.string().max(100).optional(),
+  entidade_id: z.string().max(100).optional(),
   usuario_id: z.string().uuid().optional(),
   de: z.string().datetime().optional(),
   ate: z.string().datetime().optional(),

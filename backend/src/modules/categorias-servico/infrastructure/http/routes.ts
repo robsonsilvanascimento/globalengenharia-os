@@ -14,13 +14,13 @@ const listQuerySchema = z.object({
 });
 
 const criarCategoriaBodySchema = z.object({
-  nome: z.string().min(1),
+  nome: z.string().min(1).max(150),
   area: areaSchema,
 });
 
 const atualizarCategoriaBodySchema = z
   .object({
-    nome: z.string().min(1).optional(),
+    nome: z.string().min(1).max(150).optional(),
     area: areaSchema.optional(),
     ativo: z.boolean().optional(),
   })

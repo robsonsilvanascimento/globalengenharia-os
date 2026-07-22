@@ -13,9 +13,9 @@ const osIdParams = z.object({ id: z.string().uuid() });
 
 const criarTemplateBody = z.object({
   categoria_servico_id: z.string().uuid(),
-  titulo: z.string().min(1),
+  titulo: z.string().min(1).max(200),
   itens: z
-    .array(z.object({ descricao: z.string().min(1), ordem: z.number().int() }))
+    .array(z.object({ descricao: z.string().min(1).max(500), ordem: z.number().int() }))
     .min(1),
 });
 

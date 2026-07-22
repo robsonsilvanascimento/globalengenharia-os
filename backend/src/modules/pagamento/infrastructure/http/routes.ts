@@ -17,7 +17,7 @@ const pagamentoIdParamsSchema = z.object({
 
 const pagamentoManualBodySchema = z.object({
   valor: z.number().positive(),
-  observacao: z.string().optional(),
+  observacao: z.string().max(2000).optional(),
 });
 
 export function registerPagamentoRoutes(app: FastifyInstance): void {

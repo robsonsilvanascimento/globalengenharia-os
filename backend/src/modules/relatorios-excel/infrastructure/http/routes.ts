@@ -15,15 +15,15 @@ const statusOSValues = [
 ] as const;
 
 const osQuerySchema = z.object({
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional(),
+  dataInicio: z.string().max(30).optional(),
+  dataFim: z.string().max(30).optional(),
   status: z.enum(statusOSValues).optional(),
   tecnicoId: z.string().uuid().optional(),
 });
 
 const financeiroQuerySchema = z.object({
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional(),
+  dataInicio: z.string().max(30).optional(),
+  dataFim: z.string().max(30).optional(),
 });
 
 function formatarDataArquivo(): string {

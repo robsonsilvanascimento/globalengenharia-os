@@ -10,7 +10,7 @@ import { ConflictError, NotFoundError } from '../../../../shared/http/errors/App
 import { authenticate, requireRole } from '../../../../shared/http/middlewares/auth';
 
 const listQuerySchema = z.object({
-  q: z.string().trim().min(1).optional(),
+  q: z.string().trim().min(1).max(200).optional(),
 });
 
 const clienteIdParamsSchema = z.object({
@@ -22,10 +22,10 @@ const historicoOSQuerySchema = z.object({
 });
 
 const criarClienteBodySchema = z.object({
-  nome: z.string().min(1),
-  telefone_whatsapp: z.string().min(1),
-  documento: z.string().optional(),
-  email: z.string().email().optional(),
+  nome: z.string().min(1).max(120),
+  telefone_whatsapp: z.string().min(1).max(20),
+  documento: z.string().max(14).optional(),
+  email: z.string().email().max(255).optional(),
 });
 
 const idParamsSchema = z.object({

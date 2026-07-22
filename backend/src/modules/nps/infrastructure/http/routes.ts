@@ -10,12 +10,12 @@ import {
 
 const responderBodySchema = z.object({
   nota: z.number().int().min(0).max(10),
-  comentario: z.string().optional(),
+  comentario: z.string().max(2000).optional(),
 });
 
 const resultadosQuerySchema = z.object({
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional(),
+  dataInicio: z.string().max(30).optional(),
+  dataFim: z.string().max(30).optional(),
 });
 
 export function registerNpsRoutes(

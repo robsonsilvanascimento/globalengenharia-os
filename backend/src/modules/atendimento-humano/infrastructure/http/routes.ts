@@ -18,7 +18,7 @@ const listQuerySchema = z.object({
 });
 
 const responderBodySchema = z.object({
-  resposta_texto: z.string().min(1),
+  resposta_texto: z.string().min(1).max(5000),
   salvar_como_faq: z.boolean().optional(),
 });
 

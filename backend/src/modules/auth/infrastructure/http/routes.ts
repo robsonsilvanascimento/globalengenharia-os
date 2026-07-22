@@ -26,21 +26,24 @@ const authRateLimit = {
 };
 
 const loginBodySchema = z.object({
-  email: z.string().email(),
-  senha: z.string().min(1),
+  email: z.string().email().max(255),
+  // .max(128): alem de nao existir senha legitima maior que isso, evita que
+  // uma string gigante force um custo de hashing (bcrypt) desproporcional a
+  // cada tentativa, mesmo com o rate limit acima.
+  senha: z.string().min(1).max(128),
 });
 
 const refreshBodySchema = z.object({
-  refreshToken: z.string().min(1),
+  refreshToken: z.string().min(1).max(2000),
 });
 
 const esqueciSenhaBodySchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().max(255),
 });
 
 const redefinirSenhaBodySchema = z.object({
-  token: z.string().min(1),
-  nova_senha: z.string().min(6),
+  token: z.string().min(1).max(255),
+  nova_senha: z.string().min(6).max(128),
 });
 
 export interface AuthRoutesDeps {
